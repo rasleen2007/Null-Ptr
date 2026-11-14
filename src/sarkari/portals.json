@@ -1,0 +1,310 @@
+[
+  {
+    "id": "passport-seva",
+    "name": { "en": "Passport Seva", "hi": "पासपोर्ट सेवा" },
+    "category": "Travel",
+    "description": {
+      "en": "Apply for a new passport, renew an existing one, and track application status.",
+      "hi": "नया पासपोर्ट आवेदन, नवीनीकरण और आवेदन की स्थिति देखें।"
+    },
+    "url": "https://www.passportindia.gov.in",
+    "tags": ["passport", "travel", "visa", "renewal", "passport office", "पासपोर्ट"]
+  },
+  {
+    "id": "uidai-aadhaar",
+    "name": { "en": "UIDAI Aadhaar", "hi": "यूआईडीएआई आधार" },
+    "category": "Identity",
+    "description": {
+      "en": "Official Aadhaar portal for enrolment, updates, downloads, and authentication.",
+      "hi": "आधार नामांकन, अपडेट, डाउनलोड और प्रमाणीकरण के लिए आधिकारिक पोर्टल।"
+    },
+    "url": "https://uidai.gov.in",
+    "tags": ["aadhaar", "uidai", "identity", "address update", "आधार", "पहचान"]
+  },
+  {
+    "id": "income-tax",
+    "name": { "en": "Income Tax e-Filing", "hi": "आयकर ई-फाइलिंग" },
+    "category": "Tax",
+    "description": {
+      "en": "File income tax returns, check refunds, link PAN, and view Form 26AS.",
+      "hi": "आयकर रिटर्न दाखिल करें, रिफंड देखें, पैन लिंक करें और फॉर्म 26AS देखें।"
+    },
+    "url": "https://www.incometax.gov.in",
+    "tags": ["income tax", "itr", "pan", "refund", "tax", "आयकर", "पैन"]
+  },
+  {
+    "id": "gst",
+    "name": { "en": "GST Portal", "hi": "जीएसटी पोर्टल" },
+    "category": "Tax",
+    "description": {
+      "en": "Goods and Services Tax registration, returns, and refunds.",
+      "hi": "वस्तु एवं सेवा कर पंजीकरण, रिटर्न और रिफंड।"
+    },
+    "url": "https://www.gst.gov.in",
+    "tags": ["gst", "tax", "business", "returns", "जीएसटी", "कर"]
+  },
+  {
+    "id": "epfo",
+    "name": { "en": "EPFO Member Portal", "hi": "ईपीएफओ सदस्य पोर्टल" },
+    "category": "Employment",
+    "description": {
+      "en": "Provident fund passbook, UAN activation, withdrawals, and pension claims.",
+      "hi": "भविष्य निधि पासबुक, यूएएन सक्रियण, निकासी और पेंशन दावे।"
+    },
+    "url": "https://www.epfindia.gov.in",
+    "tags": ["epf", "epfo", "pf", "provident fund", "uan", "pension", "पीएफ", "भविष्य निधि"]
+  },
+  {
+    "id": "eshram",
+    "name": { "en": "e-Shram", "hi": "ई-श्रम" },
+    "category": "Workers",
+    "description": {
+      "en": "Registration and UAN card for unorganised sector workers.",
+      "hi": "असंगठित क्षेत्र के श्रमिकों के लिए पंजीकरण और यूएएन कार्ड।"
+    },
+    "url": "https://eshram.gov.in",
+    "tags": ["eshram", "worker", "unorganised", "labour", "uan", "श्रमिक", "श्रम"]
+  },
+  {
+    "id": "digilocker",
+    "name": { "en": "DigiLocker", "hi": "डिजिलॉकर" },
+    "category": "Documents",
+    "description": {
+      "en": "Download and share verified digital documents such as licences and certificates.",
+      "hi": "लाइसेंस और प्रमाणपत्र जैसे सत्यापित डिजिटल दस्तावेज़ डाउनलोड और साझा करें।"
+    },
+    "url": "https://www.digilocker.gov.in",
+    "tags": ["digilocker", "documents", "digital", "certificate", "डिजिलॉकर", "दस्तावेज़"]
+  },
+  {
+    "id": "umang",
+    "name": { "en": "UMANG", "hi": "उमंग" },
+    "category": "Services",
+    "description": {
+      "en": "Single app for central and state government services.",
+      "hi": "केंद्र और राज्य सरकार की सेवाओं के लिए एक ही ऐप।"
+    },
+    "url": "https://web.umang.gov.in",
+    "tags": ["umang", "services", "state", "central", "उमंग", "सेवाएं"]
+  },
+  {
+    "id": "india-gov",
+    "name": { "en": "National Portal of India", "hi": "भारत का राष्ट्रीय पोर्टल" },
+    "category": "Services",
+    "description": {
+      "en": "Directory of central and state government departments, schemes, and services.",
+      "hi": "केंद्र और राज्य सरकार के विभागों, योजनाओं और सेवाओं की निर्देशिका।"
+    },
+    "url": "https://www.india.gov.in",
+    "tags": ["india", "government", "directory", "services", "भारत", "सरकार"]
+  },
+  {
+    "id": "rti-online",
+    "name": { "en": "RTI Online", "hi": "आरटीआई ऑनलाइन" },
+    "category": "Transparency",
+    "description": {
+      "en": "File Right to Information requests and first appeals with central public authorities.",
+      "hi": "केंद्रीय लोक प्राधिकरणों में सूचना का अधिकार आवेदन और प्रथम अपील दाखिल करें।"
+    },
+    "url": "https://rtionline.gov.in",
+    "tags": ["rti", "right to information", "appeal", "transparency", "आरटीआई", "सूचना"]
+  },
+  {
+    "id": "pgportal",
+    "name": { "en": "CPGRAMS Grievance Portal", "hi": "सीपीजीआरएएमएस शिकायत पोर्टल" },
+    "category": "Grievance",
+    "description": {
+      "en": "Register and track public grievances against central and state departments.",
+      "hi": "केंद्र और राज्य विभागों के खिलाफ जन शिकायत दर्ज करें और ट्रैक करें।"
+    },
+    "url": "https://pgportal.gov.in",
+    "tags": ["grievance", "complaint", "shikayat", "cpgrams", "शिकायत", "समाधान"]
+  },
+  {
+    "id": "nrega",
+    "name": { "en": "MGNREGA", "hi": "मनरेगा" },
+    "category": "Employment",
+    "description": {
+      "en": "Job cards, wage payments, and works for rural employment guarantee.",
+      "hi": "ग्रामीण रोजगार गारंटी के लिए जॉब कार्ड, मजदूरी भुगतान और कार्य।"
+    },
+    "url": "https://nrega.nic.in",
+    "tags": ["mgnrega", "nrega", "job card", "rural", "wages", "मनरेगा", "रोजगार"]
+  },
+  {
+    "id": "pmkisan",
+    "name": { "en": "PM-KISAN", "hi": "पीएम-किसान" },
+    "category": "Agriculture",
+    "description": {
+      "en": "Income support scheme for small and marginal farmer families.",
+      "hi": "छोटे और सीमांत किसान परिवारों के लिए आय सहायता योजना।"
+    },
+    "url": "https://pmkisan.gov.in",
+    "tags": ["pm kisan", "kisan", "farmer", "agriculture", "किसान", "कृषि"]
+  },
+  {
+    "id": "pmjay",
+    "name": { "en": "Ayushman Bharat PM-JAY", "hi": "आयुष्मान भारत पीएम-जय" },
+    "category": "Health",
+    "description": {
+      "en": "Health insurance cover for eligible families and hospital empanelment.",
+      "hi": "पात्र परिवारों के लिए स्वास्थ्य बीमा और अस्पताल सूची।"
+    },
+    "url": "https://pmjay.gov.in",
+    "tags": ["ayushman", "pmjay", "health", "insurance", "hospital", "आयुष्मान", "स्वास्थ्य"]
+  },
+  {
+    "id": "nfsa",
+    "name": { "en": "NFSA / Ration Card", "hi": "एनएफएसए / राशन कार्ड" },
+    "category": "Food Security",
+    "description": {
+      "en": "National food security information, ration cards, and One Nation One Ration Card.",
+      "hi": "राष्ट्रीय खाद्य सुरक्षा जानकारी, राशन कार्ड और वन नेशन वन राशन कार्ड।"
+    },
+    "url": "https://nfsa.gov.in",
+    "tags": ["ration", "nfsa", "food", "pds", "ration card", "राशन", "खाद्य"]
+  },
+  {
+    "id": "scholarships",
+    "name": { "en": "National Scholarship Portal", "hi": "राष्ट्रीय छात्रवृत्ति पोर्टल" },
+    "category": "Education",
+    "description": {
+      "en": "Central and state scholarships for school and college students.",
+      "hi": "स्कूल और कॉलेज के विद्यार्थियों के लिए केंद्र और राज्य छात्रवृत्तियां।"
+    },
+    "url": "https://scholarships.gov.in",
+    "tags": ["scholarship", "education", "student", "nsp", "छात्रवृत्ति", "शिक्षा"]
+  },
+  {
+    "id": "pmayg",
+    "name": { "en": "PMAY-Gramin", "hi": "पीएमएवाई-ग्रामीण" },
+    "category": "Housing",
+    "description": {
+      "en": "Rural housing assistance and beneficiary status.",
+      "hi": "ग्रामीण आवास सहायता और लाभार्थी स्थिति।"
+    },
+    "url": "https://pmayg.nic.in",
+    "tags": ["pmay", "housing", "rural", "awas", "घर", "आवास"]
+  },
+  {
+    "id": "voter-services",
+    "name": { "en": "Voter Services", "hi": "मतदाता सेवाएं" },
+    "category": "Elections",
+    "description": {
+      "en": "Voter registration, corrections, and electoral roll search.",
+      "hi": "मतदाता पंजीकरण, सुधार और मतदाता सूची खोज।"
+    },
+    "url": "https://voters.eci.gov.in",
+    "tags": ["voter", "election", "eci", "voter id", "मतदाता", "चुनाव"]
+  },
+  {
+    "id": "parivahan",
+    "name": { "en": "Parivahan Sewa", "hi": "परिवहन सेवा" },
+    "category": "Transport",
+    "description": {
+      "en": "Driving licence, vehicle registration, and transport services.",
+      "hi": "ड्राइविंग लाइसेंस, वाहन पंजीकरण और परिवहन सेवाएं।"
+    },
+    "url": "https://parivahan.gov.in",
+    "tags": ["driving licence", "dl", "vehicle", "rc", "transport", "लाइसेंस", "वाहन"]
+  },
+  {
+    "id": "crsorgi",
+    "name": { "en": "Birth and Death Registration", "hi": "जन्म और मृत्यु पंजीकरण" },
+    "category": "Certificates",
+    "description": {
+      "en": "Civil registration system for birth and death certificates.",
+      "hi": "जन्म और मृत्यु प्रमाणपत्र के लिए नागरिक पंजीकरण प्रणाली।"
+    },
+    "url": "https://crsorgi.gov.in",
+    "tags": ["birth certificate", "death certificate", "crs", "certificate", "जन्म", "मृत्यु"]
+  },
+  {
+    "id": "nps",
+    "name": { "en": "National Pension System", "hi": "राष्ट्रीय पेंशन प्रणाली" },
+    "category": "Pension",
+    "description": {
+      "en": "NPS registration, contributions, and pension account services.",
+      "hi": "एनपीएस पंजीकरण, योगदान और पेंशन खाता सेवाएं।"
+    },
+    "url": "https://www.npscra.nsdl.co.in",
+    "tags": ["nps", "pension", "retirement", "atal pension", "पेंशन", "सेवानिवृत्ति"]
+  },
+  {
+    "id": "nsap",
+    "name": { "en": "National Social Assistance Programme", "hi": "राष्ट्रीय सामाजिक सहायता कार्यक्रम" },
+    "category": "Social Security",
+    "description": {
+      "en": "Pensions for widows, elderly, and persons with disabilities.",
+      "hi": "विधवाओं, वृद्धजनों और दिव्यांगजनों के लिए पेंशन।"
+    },
+    "url": "https://nsap.nic.in",
+    "tags": ["nsap", "pension", "widow", "old age", "disability", "पेंशन", "विधवा"]
+  },
+  {
+    "id": "udyam",
+    "name": { "en": "Udyam Registration", "hi": "उद्यम पंजीकरण" },
+    "category": "Business",
+    "description": {
+      "en": "MSME registration for small businesses and entrepreneurs.",
+      "hi": "छोटे व्यवसायों और उद्यमियों के लिए एमएसएमई पंजीकरण।"
+    },
+    "url": "https://udyamregistration.gov.in",
+    "tags": ["udyam", "msme", "business", "entrepreneur", "उद्यम", "व्यवसाय"]
+  },
+  {
+    "id": "cybercrime",
+    "name": { "en": "National Cyber Crime Portal", "hi": "राष्ट्रीय साइबर अपराध पोर्टल" },
+    "category": "Safety",
+    "description": {
+      "en": "Report cyber fraud, financial fraud, and online crimes.",
+      "hi": "साइबर धोखाधड़ी, वित्तीय धोखाधड़ी और ऑनलाइन अपराध रिपोर्ट करें।"
+    },
+    "url": "https://cybercrime.gov.in",
+    "tags": ["cyber crime", "fraud", "online fraud", "police", "साइबर", "धोखाधड़ी"]
+  },
+  {
+    "id": "consumerhelpline",
+    "name": { "en": "National Consumer Helpline", "hi": "राष्ट्रीय उपभोक्ता हेल्पलाइन" },
+    "category": "Consumer",
+    "description": {
+      "en": "Consumer complaints and grievance redressal against sellers and services.",
+      "hi": "विक्रेताओं और सेवाओं के खिलाफ उपभोक्ता शिकायत और समाधान।"
+    },
+    "url": "https://consumerhelpline.gov.in",
+    "tags": ["consumer", "complaint", "refund", "shikayat", "उपभोक्ता", "शिकायत"]
+  },
+  {
+    "id": "indiapost",
+    "name": { "en": "India Post", "hi": "भारतीय डाक" },
+    "category": "Services",
+    "description": {
+      "en": "Post office services, savings schemes, tracking, and Aadhaar-enabled services.",
+      "hi": "डाकघर सेवाएं, बचत योजनाएं, ट्रैकिंग और आधार-सक्षम सेवाएं।"
+    },
+    "url": "https://www.indiapost.gov.in",
+    "tags": ["post office", "india post", "savings", "tracking", "डाक", "डाकघर"]
+  },
+  {
+    "id": "pmvishwakarma",
+    "name": { "en": "PM Vishwakarma", "hi": "पीएम विश्वकर्मा" },
+    "category": "Livelihood",
+    "description": {
+      "en": "Loans, training, and toolkit support for traditional artisans and craftspeople.",
+      "hi": "पारंपरिक कारीगरों और शिल्पकारों के लिए ऋण, प्रशिक्षण और टूलकिट सहायता।"
+    },
+    "url": "https://pmvishwakarma.gov.in",
+    "tags": ["vishwakarma", "artisan", "craft", "loan", "livelihood", "कारीगर", "शिल्प"]
+  },
+  {
+    "id": "land-records",
+    "name": { "en": "Digital India Land Records", "hi": "डिजिटल इंडिया भूमि अभिलेख" },
+    "category": "Land",
+    "description": {
+      "en": "Land record modernisation programme with links to state bhulekh portals.",
+      "hi": "भूमि अभिलेख आधुनिकीकरण कार्यक्रम, राज्य भूलेख पोर्टलों के लिंक के साथ।"
+    },
+    "url": "https://dilrmp.gov.in",
+    "tags": ["land", "land records", "bhulekh", "jamabandi", "khasra", "भूमि", "भूलेख"]
+  }
+]

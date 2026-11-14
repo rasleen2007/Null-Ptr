@@ -1,6 +1,7 @@
 export * from "./guard";
 export * from "./persona";
 export * from "./pii";
+export * from "./portals";
 export * from "./rti-templates";
 export * from "./schemes";
 export * from "./tokenizer";

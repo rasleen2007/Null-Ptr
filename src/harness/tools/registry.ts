@@ -11,6 +11,7 @@ import { memoryTools } from "./builtin/memory";
 import { fileTools } from "./builtin/files";
 import { webFetchTool } from "./builtin/web";
 import { shellCommandTool } from "./builtin/shell";
+import { sarkariTools } from "./builtin/sarkari";
 
 const PERMISSION_KEYS: Record<string, keyof ToolPermissionSettings | undefined> = {
   file_read: "allowFileRead",
@@ -20,6 +21,10 @@ const PERMISSION_KEYS: Record<string, keyof ToolPermissionSettings | undefined> 
   memory_update: "allowMemoryWrite",
   web_fetch: "allowNetwork",
   shell_command: "allowShell",
+  // The lookups are curated static indexes: no network and no user data leaves.
+  // Drafts and forms write into the workspace, so they use the file-write gate.
+  rti_draft: "allowFileWrite",
+  form_fill: "allowFileWrite",
 };
 
 const MEMORY_TOOLS = new Set(["memory_save", "memory_update"]);
@@ -67,6 +72,7 @@ export function createToolRegistry(config: Pick<ServerConfig, "enableShell">): T
     ...fileTools,
     webFetchTool,
     shellCommandTool,
+    ...sarkariTools,
   ];
   const byName = new Map(tools.map((tool) => [tool.name, tool]));
 
@@ -81,6 +87,7 @@ export function createToolRegistry(config: Pick<ServerConfig, "enableShell">): T
           description: tool.description,
           category: tool.category,
           sensitivity: tool.sensitivity,
+          usesVault: tool.usesVault,
           parameters: tool.parameters,
           enabled: availability.enabled,
           disabledReason: availability.reason,

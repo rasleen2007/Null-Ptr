@@ -64,6 +64,7 @@ export async function startFakeOllama(): Promise<FakeOllama> {
             { name: "fake-slow", size: 1, details: { parameter_size: "1B", family: "fake" } },
             { name: "fake-timeout", size: 1, details: { parameter_size: "1B", family: "fake" } },
             { name: "fake-empty", size: 1, details: { parameter_size: "1B", family: "fake" } },
+            { name: "fake-vault-tool", size: 1, details: { parameter_size: "1B", family: "fake" } },
           ],
         }),
       );
@@ -129,6 +130,56 @@ export async function startFakeOllama(): Promise<FakeOllama> {
           done: true,
           done_reason: "stop",
           prompt_eval_count: 12,
+          eval_count: 6,
+        });
+      }
+      res.end();
+      return;
+    }
+
+    if (model === "fake-vault-tool") {
+      if (!hasToolResult) {
+        writeLine(res, {
+          model,
+          message: {
+            role: "assistant",
+            content: "I need the vault-backed RTI tool. Requesting permission.",
+            tool_calls: [
+              {
+                function: {
+                  name: "rti_draft",
+                  arguments: {
+                    language: "en",
+                    applicantName: "{{NAME_1}}",
+                    department: "Department of Food and Public Distribution",
+                    information: ["Copy of records linked to Aadhaar {{AADHAAR_1}}"],
+                    fileName: "vault-test",
+                  },
+                },
+              },
+            ],
+          },
+          done: true,
+          done_reason: "tool_calls",
+        });
+      } else if (toolDenied) {
+        writeLine(res, messageContent({ role: "assistant", content: "The draft was denied. " }));
+        writeLine(res, messageContent({ role: "assistant", content: "Nothing was executed." }));
+        writeLine(res, {
+          model,
+          message: { role: "assistant", content: "" },
+          done: true,
+          done_reason: "stop",
+        });
+      } else {
+        writeLine(res, messageContent({ role: "assistant", content: "The RTI draft " }));
+        writeLine(res, messageContent({ role: "assistant", content: "was written." }));
+        writeLine(res, {
+          model,
+          message: { role: "assistant", content: "" },
+          done: true,
+          done_reason: "stop",
+          prompt_eval_count: 15,
           eval_count: 6,
         });
       }

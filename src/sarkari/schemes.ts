@@ -51,20 +51,35 @@ export function findSchemes(query: string, limit = 5): Scheme[] {
 }
 
 export function formatSchemeSummary(scheme: Scheme, language: "en" | "hi" = "en"): string {
+  const labels =
+    language === "hi"
+      ? {
+          benefits: "लाभ",
+          eligibility: "पात्रता",
+          documents: "आवश्यक दस्तावेज़",
+          link: "आधिकारिक लिंक",
+        }
+      : {
+          benefits: "Benefits",
+          eligibility: "Eligibility",
+          documents: "Documents",
+          link: "Official link",
+        };
+
   const lines = [
     `${scheme.name[language]} (${scheme.category})`,
     scheme.description[language],
     "",
-    "Benefits:",
+    `${labels.benefits}:`,
     ...scheme.benefits.map((item) => `- ${item}`),
     "",
-    "Eligibility:",
+    `${labels.eligibility}:`,
     ...scheme.eligibility.map((item) => `- ${item}`),
     "",
-    "Documents:",
+    `${labels.documents}:`,
     ...scheme.documents.map((item) => `- ${item}`),
     "",
-    `Official link: ${scheme.applyUrl}`,
+    `${labels.link}: ${scheme.applyUrl}`,
   ];
   return lines.join("\n");
 }

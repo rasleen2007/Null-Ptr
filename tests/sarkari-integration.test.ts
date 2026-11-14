@@ -3,8 +3,9 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { startFakeOllama, type FakeOllama } from "./helpers/fake-ollama";
-import { collectEvents, setupHarness, type TestHarnessContext } from "./helpers/harness";
-import { getSecretMap, resetVaultForTests, unlockVault } from "@/sarkari/vault";
+import { collectEvents, finalEvent, setupHarness, type TestHarnessContext } from "./helpers/harness";
+import type { StreamEvent } from "@/harness/types";
+import { getSecretMap, rememberValue, resetVaultForTests, unlockVault } from "@/sarkari/vault";
 
 const PASSPHRASE = "correct horse battery staple";
 const AADHAAR = "999941057058";
@@ -111,5 +112,80 @@ describe("privacy ingress through the harness", () => {
 
     const messages = await ctx.store.listMessages(source.conversationId);
     expect(messages[0].content).toBe("What documents do I need for PM-KISAN?");
+  });
+});
+
+describe("vault edge for approved government tools", () => {
+  it("keeps placeholders until the approved tool runs, then scrubs the result", async () => {
+    ctx = await setupHarness(fake.url);
+    await ctx.harness.updateSettings({ permissions: { allowFileWrite: true } });
+    await unlockVault(PASSPHRASE);
+    await rememberValue("name", "Rahul Sharma");
+    await rememberValue("aadhaar", AADHAAR);
+
+    const source = await ctx.harness.startChat({
+      message: "Please draft an RTI application",
+      model: "ollama:fake-vault-tool",
+    });
+    const events = await collectEvents(source);
+
+    const permission = events.find(
+      (event): event is Extract<StreamEvent, { type: "permission_request" }> =>
+        event.type === "permission_request",
+    );
+    if (!permission) throw new Error("Expected a permission request.");
+
+    expect(permission.call.name).toBe("rti_draft");
+    expect(permission.tool.usesVault).toBe(true);
+    expect(permission.call.arguments.applicantName).toBe("{{NAME_1}}");
+    expect(JSON.stringify(permission.call.arguments)).toContain("{{AADHAAR_1}}");
+    expect(JSON.stringify(permission.call.arguments)).not.toContain("Rahul Sharma");
+    expect(JSON.stringify(permission.call.arguments)).not.toContain(AADHAAR);
+    expect(finalEvent(events).status).toBe("awaiting_approval");
+
+    // Nothing is written before the user approves.
+    const beforeApproval = await readFile(
+      path.join(ctx.workspaceDir, "rti", "vault-test.txt"),
+      "utf8",
+    ).catch(() => null);
+    expect(beforeApproval).toBeNull();
+
+    const resumed = await ctx.harness.resumeRun(source.runId, {
+      approved: true,
+      toolCallId: permission.call.id,
+    });
+    const resumedEvents = await collectEvents(resumed);
+
+    const toolResult = resumedEvents.find(
+      (event): event is Extract<StreamEvent, { type: "tool_result" }> =>
+        event.type === "tool_result",
+    );
+    if (!toolResult) throw new Error("Expected a tool result.");
+
+    expect(toolResult.isError).toBe(false);
+    expect(toolResult.content).not.toContain(AADHAAR);
+    expect(toolResult.content).not.toContain("Rahul Sharma");
+    expect(toolResult.content).toContain("{{AADHAAR_1}}");
+    expect(finalEvent(resumedEvents).status).toBe("completed");
+
+    const payload = JSON.parse(toolResult.content);
+    expect(payload.path).toMatch(/^rti[\\/]vault-test\.txt$/);
+
+    // The file itself has the real values; only the model/browser copy is scrubbed.
+    const draft = await readFile(path.join(ctx.workspaceDir, payload.path), "utf8");
+    expect(draft).toContain("Rahul Sharma");
+    expect(draft).toContain(AADHAAR);
+
+    const messages = await ctx.store.listMessages(source.conversationId);
+    const toolMessage = messages.find((message) => message.role === "tool");
+    expect(toolMessage?.content).not.toContain(AADHAAR);
+    expect(toolMessage?.content).not.toContain("Rahul Sharma");
+    expect(toolMessage?.content).toContain("{{AADHAAR_1}}");
+
+    for (const request of fake.chatRequests()) {
+      const body = JSON.stringify(request.body);
+      expect(body).not.toContain(AADHAAR);
+      expect(body).not.toContain("Rahul Sharma");
+    }
   });
 });
