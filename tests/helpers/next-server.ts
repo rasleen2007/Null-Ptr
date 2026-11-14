@@ -67,6 +67,7 @@ export async function startNextServer(overrides: Record<string, string> = {}): P
     PORT: String(port),
     JARVIS_DATA_FILE: dataFile,
     JARVIS_WORKSPACE_DIR: workspaceDir,
+    JARVIS_VAULT_FILE: path.join(tempRoot, "vault.enc.json"),
     JARVIS_ACCESS_TOKEN: "e2e-secret-token",
     JARVIS_DEFAULT_MODEL: "ollama:fake-chat",
     JARVIS_RATE_LIMIT_MAX: "1000",

@@ -31,7 +31,7 @@ import {
   type SettingsResponse,
   type ToolsResponse,
 } from "@/lib/api";
-import { useChatSession } from "@/lib/use-chat-session";
+import { useChatSession, type PrivacyReport } from "@/lib/use-chat-session";
 import { cn, formatNumber } from "@/lib/utils";
 import { AIOrb } from "@/components/visual/ai-orb";
 import { ThinkingIndicator } from "@/components/common/thinking-indicator";
@@ -52,6 +52,7 @@ import { Composer } from "./composer";
 import { MessageBubble } from "./message-bubble";
 import { PermissionCard } from "./permission-card";
 import { ToolActivityList } from "./tool-activity";
+import { VaultControl } from "@/components/vault/vault-control";
 
 const CHAT_SUGGESTIONS = [
   "What can this harness do?",
@@ -270,6 +271,93 @@ function AgentPanel({
         </Link>
       </div>
     </div>
+  );
+}
+
+const PII_TYPE_LABEL: Record<string, string> = {
+  aadhaar: "Aadhaar",
+  pan: "PAN",
+  phone: "phone",
+  email: "email",
+  ifsc: "IFSC",
+  upi: "UPI",
+  account: "account",
+  dob: "date of birth",
+  address: "address",
+  name: "name",
+  other: "other",
+};
+
+function PrivacySummary({ privacy }: { privacy: PrivacyReport }) {
+  const placeholders = privacy.placeholders.slice(0, 6);
+  const remaining = privacy.placeholders.length - placeholders.length;
+  const types = [...new Set(privacy.types)];
+  const local = privacy.route === "ollama";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.03] px-3 py-2"
+    >
+      <div className="flex flex-wrap items-center gap-2 text-[0.6rem]">
+        <span className="inline-flex items-center gap-1 font-medium text-emerald-200/90">
+          <ShieldCheck className="h-3 w-3" /> Privacy guard
+        </span>
+        {privacy.redacted ? (
+          <span className="text-slate-400">
+            {privacy.placeholders.length} identifier
+            {privacy.placeholders.length === 1 ? "" : "s"} replaced with placeholders
+          </span>
+        ) : (
+          <span className="text-slate-500">No personal identifiers detected in this turn</span>
+        )}
+        {local ? (
+          <Badge variant="warning" className="px-1.5 py-0 text-[0.5rem] uppercase tracking-wide">
+            <Cpu className="h-2.5 w-2.5" /> local model only
+          </Badge>
+        ) : (
+          <Badge
+            variant={privacy.verifiedClean ? "success" : "danger"}
+            className="px-1.5 py-0 text-[0.5rem] uppercase tracking-wide"
+          >
+            {privacy.verifiedClean ? "cloud · placeholders only" : "residual PII detected"}
+          </Badge>
+        )}
+        {!local && !privacy.verifiedClean ? (
+          <AlertTriangle className="h-3 w-3 text-rose-300" />
+        ) : null}
+      </div>
+
+      {placeholders.length ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+          {placeholders.map((placeholder) => (
+            <code
+              key={placeholder}
+              className="rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[0.55rem] text-cyan-200/80"
+            >
+              {placeholder}
+            </code>
+          ))}
+          {remaining > 0 ? (
+            <span className="text-[0.55rem] text-slate-500">+{remaining} more</span>
+          ) : null}
+        </div>
+      ) : null}
+
+      {types.length ? (
+        <p className="mt-1 text-[0.55rem] text-slate-600">
+          {types.map((type) => PII_TYPE_LABEL[type] ?? type).join(" · ")}
+        </p>
+      ) : null}
+
+      {local ? (
+        <p className="mt-1 text-[0.55rem] leading-relaxed text-amber-200/60">
+          Unknown personal data was detected, so this turn stayed on the local model. Nothing was
+          sent to a cloud provider.
+        </p>
+      ) : null}
+    </motion.div>
   );
 }
 
@@ -541,8 +629,11 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
                 {visibleMessages.length ? ` · ${visibleMessages.length} messages` : ""}
               </p>
             </div>
-            <div className="hidden items-center gap-2 sm:flex">
-              <StatusPill session={session} />
+            <div className="flex items-center gap-2">
+              <VaultControl />
+              <div className="hidden sm:block">
+                <StatusPill session={session} />
+              </div>
             </div>
             <Button
               variant="secondary"
@@ -658,6 +749,7 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
                   />
                 ) : null}
               </AnimatePresence>
+              {session.privacy ? <PrivacySummary privacy={session.privacy} /> : null}
               <Composer
                 value={input}
                 onChange={setInput}

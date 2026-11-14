@@ -12,6 +12,7 @@ import type {
   ToolInfo,
   ToolPermissionSettings,
 } from "@/harness/types";
+import type { PiiType } from "@/sarkari/pii";
 
 export interface ApiErrorShape {
   error?: string;
@@ -201,4 +202,43 @@ export interface LogsResponse {
 
 export interface RunResponse {
   run: RunRecord;
+}
+
+/** Metadata only; the vault API never serializes stored values. */
+export interface VaultFieldInfo {
+  placeholder: string;
+  type: PiiType;
+  label?: string;
+  createdAt: string;
+}
+
+export interface VaultStatusResponse {
+  exists: boolean;
+  unlocked: boolean;
+  fieldCount: number;
+  updatedAt?: string;
+  fields: VaultFieldInfo[];
+}
+
+export function loadVault(): Promise<VaultStatusResponse> {
+  return apiGet<VaultStatusResponse>("/api/vault");
+}
+
+export function unlockVault(passphrase: string): Promise<VaultStatusResponse> {
+  return apiSend<VaultStatusResponse>("/api/vault", "POST", { action: "unlock", passphrase });
+}
+
+export function lockVault(): Promise<VaultStatusResponse> {
+  return apiSend<VaultStatusResponse>("/api/vault", "POST", { action: "lock" });
+}
+
+export function wipeVault(): Promise<VaultStatusResponse> {
+  return apiSend<VaultStatusResponse>("/api/vault", "DELETE");
+}
+
+export function forgetVaultField(placeholder: string): Promise<VaultStatusResponse> {
+  return apiSend<VaultStatusResponse>(
+    `/api/vault/fields/${encodeURIComponent(placeholder)}`,
+    "DELETE",
+  );
 }

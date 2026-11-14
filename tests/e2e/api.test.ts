@@ -141,6 +141,49 @@ describe("production HTTP API E2E", () => {
     expect(finalEvent(events).status).toBe("failed");
   });
 
+  it("exposes vault metadata only and rejects a wrong passphrase distinctly", async () => {
+    const created = await postJson("/api/vault", {
+      action: "unlock",
+      passphrase: "e2e vault passphrase",
+    });
+    expect(created.status).toBe(200);
+    await expect(created.json()).resolves.toMatchObject({
+      exists: true,
+      unlocked: true,
+      fields: [],
+    });
+
+    const chat = await postJson("/api/chat", {
+      message: "My Aadhaar is 999941057058",
+      model: "ollama:fake-chat",
+    });
+    expect(chat.status).toBe(200);
+    await readSse(chat);
+
+    const response = await api("/api/vault");
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      unlocked: boolean;
+      fields: { placeholder: string; type: string }[];
+    };
+    expect(body.unlocked).toBe(true);
+    expect(body.fields).toContainEqual(
+      expect.objectContaining({ placeholder: "{{AADHAAR_1}}", type: "aadhaar" }),
+    );
+    expect(JSON.stringify(body)).not.toContain("999941057058");
+
+    const locked = await postJson("/api/vault", { action: "lock" });
+    expect(locked.status).toBe(200);
+    expect(JSON.stringify(await locked.json())).not.toContain("999941057058");
+
+    const wrong = await postJson("/api/vault", {
+      action: "unlock",
+      passphrase: "wrong passphrase",
+    });
+    expect(wrong.status).toBe(401);
+    await expect(wrong.json()).resolves.toMatchObject({ code: "wrong_passphrase" });
+  });
+
   it("pauses for approval and resumes only after an authenticated approval", async () => {
     const settingsResponse = await api("/api/settings", {
       method: "PATCH",

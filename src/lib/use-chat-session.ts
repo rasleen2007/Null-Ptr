@@ -11,6 +11,7 @@ import type {
   ToolInfo,
   ToolSensitivity,
 } from "@/harness/types";
+import type { PiiType } from "@/sarkari/pii";
 import {
   apiGet,
   apiSend,
@@ -32,6 +33,14 @@ export interface PermissionRequest {
   call: ToolCall;
   tool: ToolInfo;
   reason: string;
+}
+
+export interface PrivacyReport {
+  redacted: boolean;
+  placeholders: string[];
+  types: PiiType[];
+  route: "cloud" | "ollama";
+  verifiedClean: boolean;
 }
 
 export type SessionStatus = "idle" | "streaming" | "awaiting" | "error";
@@ -75,6 +84,7 @@ export function useChatSession(options: UseChatSessionOptions) {
   const [thinking, setThinking] = useState<string[]>([]);
   const [toolActivity, setToolActivity] = useState<ToolActivity[]>([]);
   const [permission, setPermission] = useState<PermissionRequest | null>(null);
+  const [privacy, setPrivacy] = useState<PrivacyReport | null>(null);
   const [iteration, setIteration] = useState<{ iteration: number; maxIterations: number } | null>(null);
   const [usage, setUsage] = useState<{ promptTokens?: number; completionTokens?: number } | null>(null);
   const [status, setStatus] = useState<SessionStatus>("idle");
@@ -165,6 +175,15 @@ export function useChatSession(options: UseChatSessionOptions) {
         case "usage":
           setUsage({ promptTokens: event.promptTokens, completionTokens: event.completionTokens });
           break;
+        case "privacy":
+          setPrivacy({
+            redacted: event.redacted,
+            placeholders: event.placeholders,
+            types: event.types,
+            route: event.route,
+            verifiedClean: event.verifiedClean,
+          });
+          break;
         case "error":
           setError(event.message);
           break;
@@ -216,6 +235,7 @@ export function useChatSession(options: UseChatSessionOptions) {
     setThinking([]);
     setToolActivity([]);
     setPermission(null);
+    setPrivacy(null);
     setIteration(null);
     setUsage(null);
     setRunId(null);
@@ -253,6 +273,7 @@ export function useChatSession(options: UseChatSessionOptions) {
       setThinking([]);
       setToolActivity([]);
       setPermission(null);
+      setPrivacy(null);
       setUsage(null);
       setIteration(null);
 
@@ -358,6 +379,7 @@ export function useChatSession(options: UseChatSessionOptions) {
     thinking,
     toolActivity,
     permission,
+    privacy,
     iteration,
     usage,
     status,

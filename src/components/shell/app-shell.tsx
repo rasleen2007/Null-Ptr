@@ -12,6 +12,7 @@ import {
   LayoutDashboard,
   MessageSquare,
   Settings,
+  ShieldCheck,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -50,6 +51,7 @@ const SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "System",
     items: [
       { href: "/monitor", label: "Execution monitor", short: "Monitor", icon: Activity },
+      { href: "/vault", label: "Privacy vault", short: "Vault", icon: ShieldCheck },
       { href: "/settings", label: "Settings", short: "Config", icon: Settings },
     ],
   },
