@@ -1,0 +1,38 @@
+services:
+  jarvis:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jarvis-ai-harness:local
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      JARVIS_ACCESS_TOKEN: ${JARVIS_ACCESS_TOKEN:-}
+      JARVIS_ENABLE_SHELL: ${JARVIS_ENABLE_SHELL:-false}
+      JARVIS_DEFAULT_MODEL: ${JARVIS_DEFAULT_MODEL:-ollama:llama3.1}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      JARVIS_RATE_LIMIT_MAX: ${JARVIS_RATE_LIMIT_MAX:-240}
+      JARVIS_CHAT_RATE_LIMIT_MAX: ${JARVIS_CHAT_RATE_LIMIT_MAX:-60}
+      JARVIS_RATE_LIMIT_WINDOW_MS: ${JARVIS_RATE_LIMIT_WINDOW_MS:-60000}
+    volumes:
+      - jarvis-data:/app/.data
+      - jarvis-workspace:/app/.workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp
+
+volumes:
+  jarvis-data:
+  jarvis-workspace:

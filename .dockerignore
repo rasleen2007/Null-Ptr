@@ -1,0 +1,16 @@
+node_modules
+.next
+.git
+.gitignore
+.data
+.workspace
+.env
+.env.*
+!.env.example
+tests
+docs
+supabase
+*.log
+tsconfig.tsbuildinfo
+Dockerfile
+docker-compose.yml

@@ -1,0 +1,44 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+next-env.d.ts
+
+# production
+/build
+
+# local runtime data (local storage adapter and tool sandbox)
+/.data/
+/data/
+/.workspace/
+
+# env files
+.env
+.env*.local
+.env.local
+
+# testing
+/coverage
+.vitest
+
+# misc
+.DS_Store
+*.pem
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# typescript
+*.tsbuildinfo
+
+# vercel
+.vercel
+
+# cloudflare / opennext
+.open-next/
+.wrangler/
