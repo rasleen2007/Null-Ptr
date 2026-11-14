@@ -10,6 +10,7 @@ import type {
   ToolCategory,
   ToolInfo,
   ToolSensitivity,
+  RetrievedMemory,
 } from "@/harness/types";
 import type { PiiType } from "@/sarkari/pii";
 import {
@@ -41,6 +42,10 @@ export interface PrivacyReport {
   types: PiiType[];
   route: "cloud" | "ollama";
   verifiedClean: boolean;
+}
+
+export interface MemoryRecall {
+  memories: RetrievedMemory[];
 }
 
 export type SessionStatus = "idle" | "streaming" | "awaiting" | "error";
@@ -85,6 +90,7 @@ export function useChatSession(options: UseChatSessionOptions) {
   const [toolActivity, setToolActivity] = useState<ToolActivity[]>([]);
   const [permission, setPermission] = useState<PermissionRequest | null>(null);
   const [privacy, setPrivacy] = useState<PrivacyReport | null>(null);
+  const [memoryRecall, setMemoryRecall] = useState<MemoryRecall | null>(null);
   const [iteration, setIteration] = useState<{ iteration: number; maxIterations: number } | null>(null);
   const [usage, setUsage] = useState<{ promptTokens?: number; completionTokens?: number } | null>(null);
   const [status, setStatus] = useState<SessionStatus>("idle");
@@ -183,6 +189,9 @@ export function useChatSession(options: UseChatSessionOptions) {
             route: event.route,
             verifiedClean: event.verifiedClean,
           });
+          break;
+        case "memory_recall":
+          setMemoryRecall({ memories: event.memories });
           break;
         case "error":
           setError(event.message);
@@ -380,6 +389,7 @@ export function useChatSession(options: UseChatSessionOptions) {
     toolActivity,
     permission,
     privacy,
+    memoryRecall,
     iteration,
     usage,
     status,

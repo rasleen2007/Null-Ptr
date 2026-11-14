@@ -178,6 +178,9 @@ export function createHarness(options: {
         )
       : { memories: [], promptBlock: "" };
 
+    // Emit memory_recall event on first iteration if memories were retrieved
+    let memoryRecallEmitted = false;
+
     async function lastUserMessage(conversationId: string, fallback: string): Promise<string> {
       const messages = await store.listMessages(conversationId);
       for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -503,6 +506,15 @@ export function createHarness(options: {
             route: guarded.route,
             verifiedClean: guarded.report.verifiedClean,
           };
+
+          if (!memoryRecallEmitted && memory.memories.length > 0) {
+            yield {
+              type: "memory_recall",
+              runId: run.id,
+              memories: memory.memories,
+            };
+            memoryRecallEmitted = true;
+          }
 
           if (state.iteration === 1) {
             const localNote =

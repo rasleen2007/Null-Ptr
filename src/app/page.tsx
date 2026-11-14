@@ -1,117 +1,123 @@
 ﻿"use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  ArrowUpRight,
-  Bot,
-  BrainCircuit,
-  Cpu,
+  FileText,
+  FolderOpen,
   MessageSquare,
-  Network,
-  ShieldCheck,
+  Shield,
   Sparkles,
-  Wrench,
-  Zap,
+  TrendingUp,
+  type LucideIcon,
 } from "lucide-react";
-import { AIOrb } from "@/components/visual/ai-orb";
+import { apiGet, type HealthResponse } from "@/lib/api";
 import { PageContainer } from "@/components/common/page-container";
-import { StatCard } from "@/components/common/stat-card";
-import { StatusDot } from "@/components/common/status-dot";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import { cn, cnStatus, formatNumber, relativeTime, truncateText } from "@/lib/utils";
-import type { Conversation } from "@/harness/types";
-import {
-  apiGet,
-  type HealthResponse,
-  type MemoriesResponse,
-  type ModelsResponse,
-  type RunsResponse,
-  type SettingsResponse,
-  type ToolsResponse,
-} from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-const SUGGESTIONS = [
-  "What can this harness do?",
-  "Remember that I prefer concise answers",
-  "Plan a focused work session for today",
+const GRID_PATTERN = 'url("data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M30 0L60 30L30 60L0 30Z\' fill=\'%23ffffff\' fill-opacity=\'0.03\'/%3E%3C/svg%3E")';
+const SEARCH_ICON = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\'%3E%3Cpath d=\'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\'/%3E%3C/svg%3E")';
+
+interface QuickAction {
+  href: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  color: string;
+  badge?: string;
+}
+
+const QUICK_ACTIONS: QuickAction[] = [
+  {
+    href: "/chat",
+    label: "AI Assistant",
+    description: "Chat with Sarkari Saathi for help with government services, schemes, RTI, and forms.",
+    icon: MessageSquare,
+    color: "indigo",
+    badge: "Hindi & English",
+  },
+  {
+    href: "/services",
+    label: "Government Schemes",
+    description: "Check eligibility, benefits, required documents, and apply for central and state schemes.",
+    icon: Sparkles,
+    color: "emerald",
+    badge: "Scheme lookup",
+  },
+  {
+    href: "/chat?prompt=Draft%20an%20RTI%20application%20for%20",
+    label: "Draft RTI Application",
+    description: "Generate a complete RTI application with the right format, sections, and submission details.",
+    icon: FileText,
+    color: "amber",
+    badge: "Auto-filled",
+  },
+  {
+    href: "/chat?prompt=Help%20me%20fill%20a%20government%20form%20for%20",
+    label: "Fill Government Forms",
+    description: "Get step-by-step guidance for filling official forms with your details securely.",
+    icon: FolderOpen,
+    color: "violet",
+    badge: "PDF ready",
+  },
+  {
+    href: "/chat?prompt=Find%20official%20information%20about%20",
+    label: "Official Information",
+    description: "Look up government portals, circulars, notifications, and contact details from .gov.in sources.",
+    icon: Shield,
+    color: "blue",
+    badge: "Verified sources",
+  },
+  {
+    href: "/documents",
+    label: "My Documents",
+    description: "Access your generated RTI drafts, filled forms, and saved documents in one place.",
+    icon: TrendingUp,
+    color: "rose",
+    badge: "Download ready",
+  },
+];
+
+const SUGGESTED_PROMPTS = [
+  "Mere liye suitable government schemes batao",
+  "Mujhe RTI application draft karni hai",
+  "Mujhe ek government form fill karna hai",
+  "Mujhe kisi government service ki information chahiye",
+  "What schemes am I eligible for in Maharashtra?",
+  "Draft an RTI for pending passport application",
 ];
 
 export default function DashboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const [quickPrompt, setQuickPrompt] = useState("");
-  const [data, setData] = useState<{
-    health: HealthResponse | null;
-    models: ModelsResponse | null;
-    settings: SettingsResponse["settings"] | null;
-    conversations: Conversation[];
-    memories: MemoriesResponse["memories"];
-    runs: RunsResponse["runs"];
-    tools: ToolsResponse["tools"];
-    loaded: boolean;
-  }>({
-    health: null,
-    models: null,
-    settings: null,
-    conversations: [],
-    memories: [],
-    runs: [],
-    tools: [],
-    loaded: false,
-  });
 
   useEffect(() => {
     let cancelled = false;
-    async function load() {
-      const [health, models, settings, conversations, memories, runs, tools] = await Promise.allSettled([
-        apiGet<HealthResponse>("/api/health"),
-        apiGet<ModelsResponse>("/api/models"),
-        apiGet<SettingsResponse>("/api/settings"),
-        apiGet<{ conversations: Conversation[] }>("/api/conversations"),
-        apiGet<MemoriesResponse>("/api/memory?limit=200"),
-        apiGet<RunsResponse>("/api/runs"),
-        apiGet<ToolsResponse>("/api/tools"),
-      ]);
-      if (cancelled) return;
-      setData({
-        health: health.status === "fulfilled" ? health.value : null,
-        models: models.status === "fulfilled" ? models.value : null,
-        settings: settings.status === "fulfilled" ? settings.value.settings : null,
-        conversations:
-          conversations.status === "fulfilled" ? conversations.value.conversations ?? [] : [],
-        memories: memories.status === "fulfilled" ? memories.value.memories ?? [] : [],
-        runs: runs.status === "fulfilled" ? runs.value.runs ?? [] : [],
-        tools: tools.status === "fulfilled" ? tools.value.tools ?? [] : [],
-        loaded: true,
+    fetch("/api/health", { cache: "no-store" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: HealthResponse | null) => {
+        if (!cancelled) {
+          setHealth(data);
+          setLoaded(true);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoaded(true);
       });
-    }
-    void load();
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const enabledTools = useMemo(() => data.tools.filter((tool) => tool.enabled).length, [data.tools]);
-  const configuredCloud = useMemo(() => {
-    if (!data.health) return 0;
-    return [data.health.providers.gemini, data.health.providers.groq, data.health.providers.openrouter].filter(
-      Boolean,
-    ).length;
-  }, [data.health]);
-
-  const defaultModel = useMemo(() => {
-    const id = data.settings?.defaultModel ?? data.models?.defaultModel;
-    if (!id) return "—";
-    const model = data.models?.models.find((entry) => entry.id === id);
-    return model?.label ?? id;
-  }, [data.models, data.settings]);
+  const initialPrompt = searchParams.get("prompt");
 
   function launch(prompt?: string) {
     const value = (prompt ?? quickPrompt).trim();
@@ -119,335 +125,215 @@ export default function DashboardPage() {
   }
 
   return (
-    <PageContainer className="space-y-6">
-      <section className="grid gap-5 xl:grid-cols-[1.35fr_1fr]">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="relative overflow-hidden rounded-3xl border border-white/[0.07] bg-[rgba(5,12,25,0.55)] p-6 backdrop-blur-xl sm:p-8"
-        >
-          <div className="pointer-events-none absolute inset-0 grid-overlay opacity-40" />
-          <div className="pointer-events-none absolute -left-24 -top-24 h-64 w-64 rounded-full bg-cyan-400/[0.08] blur-3xl" />
-          <div className="relative">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="success" className="gap-2">
-                <StatusDot tone="online" />
-                Systems online
-              </Badge>
-              <Badge variant="secondary">{data.health?.storage === "supabase" ? "Supabase persistence" : "Local persistence"}</Badge>
-              <Badge variant="secondary">{configuredCloud} cloud provider{configuredCloud === 1 ? "" : "s"}</Badge>
-            </div>
-
-            <h1 className="mt-6 max-w-xl text-3xl font-semibold leading-[1.1] tracking-tight text-slate-50 sm:text-[2.75rem]">
-              Your intelligence,
-              <span className="gradient-text"> orchestrated.</span>
-            </h1>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-400">
-              JARVIS routes your intent across hosted and local models, retrieves durable memory, and
-              executes tools under explicit permission. One harness. Total context.
-            </p>
-
-            <form
-              className="mt-6 flex flex-col gap-2 sm:flex-row"
-              onSubmit={(event) => {
-                event.preventDefault();
-                launch();
-              }}
-            >
-              <div className="relative flex-1">
-                <Sparkles className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-cyan-300/70" />
-                <Input
-                  value={quickPrompt}
-                  onChange={(event) => setQuickPrompt(event.target.value)}
-                  placeholder="Issue a command or ask anything…"
-                  className="h-12 pl-10 pr-4 text-sm"
-                  aria-label="Quick prompt"
-                />
-              </div>
-              <Button type="submit" size="lg" className="h-12 shrink-0">
-                Engage <ArrowRight className="h-4 w-4" />
-              </Button>
-            </form>
-
-            <div className="mt-4 flex flex-wrap gap-2">
-              {SUGGESTIONS.map((suggestion) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => launch(suggestion)}
-                  className="rounded-full border border-white/10 bg-white/[0.025] px-3 py-1.5 text-[0.7rem] text-slate-400 transition-colors hover:border-cyan-400/30 hover:text-cyan-200"
-                >
-                  {suggestion}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-8 flex flex-wrap gap-2">
-              <Button asChild variant="secondary">
-                <Link href="/chat">
-                  <MessageSquare className="h-4 w-4" /> Open chat workspace
-                </Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/agent">
-                  <Bot className="h-4 w-4" /> Deploy agent
-                </Link>
-              </Button>
-            </div>
+    <PageContainer className="space-y-8">
+      <section className="relative overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-indigo-600 via-indigo-700 to-indigo-800 p-6 sm:p-8 lg:p-10 text-white">
+        <div className="absolute inset-0 opacity-5" style={{ backgroundImage: GRID_PATTERN }} />
+        <div className="relative max-w-3xl">
+          <div className="flex flex-wrap items-center gap-2 mb-6">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[0.65rem] uppercase tracking-[0.15em]">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              Privacy-first • Local vault • AES-256-GCM
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[0.65rem] uppercase tracking-[0.15em]">
+              Hindi • Hinglish • English
+            </span>
           </div>
-        </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="relative flex flex-col items-center justify-center overflow-hidden rounded-3xl border border-cyan-400/10 bg-[rgba(4,10,22,0.6)] p-6 backdrop-blur-xl"
-        >
-          <div className="pointer-events-none absolute inset-0 grid-overlay opacity-50" />
-          <AIOrb size={210} showLabel state={data.loaded ? "idle" : "thinking"} />
-          <div className="relative mt-7 grid w-full grid-cols-3 gap-2">
-            {[
-              { label: "Providers", value: `${configuredCloud}/3`, icon: Network },
-              { label: "Tools", value: `${enabledTools}`, icon: Wrench },
-              { label: "Memories", value: `${formatNumber(data.memories.length)}`, icon: BrainCircuit },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-center">
-                <item.icon className="mx-auto h-3.5 w-3.5 text-cyan-300/70" />
-                <p className="mt-1.5 text-sm font-semibold text-slate-100">{item.value}</p>
-                <p className="text-[0.56rem] uppercase tracking-[0.18em] text-slate-500">{item.label}</p>
-              </div>
-            ))}
-          </div>
-          <div className="relative mt-4 w-full space-y-2">
-            <div className="flex items-center justify-between text-[0.62rem] uppercase tracking-[0.15em] text-slate-500">
-              <span>Context capacity</span>
-              <span className="font-mono text-slate-400">
-                {formatNumber(data.health?.limits.contextTokenBudget ?? 12000)} tok
-              </span>
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-semibold leading-[1.1] tracking-tight">
+            Government services, <span className="text-amber-300">made simpler and safer.</span>
+          </h1>
+          <p className="mt-4 text-lg text-indigo-100/90 max-w-2xl">
+            Sarkari Saathi helps you file RTIs, apply for schemes, fill forms, and find official information — all while keeping your personal data encrypted and private.
+          </p>
+
+          <form
+            className="mt-6 flex flex-col gap-3 sm:flex-row"
+            onSubmit={(event) => {
+              event.preventDefault();
+              launch();
+            }}
+          >
+            <div className="relative flex-1">
+              <span className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-indigo-200" style={{ backgroundImage: SEARCH_ICON }} />
+              <input
+                value={quickPrompt}
+                onChange={(event) => setQuickPrompt(event.target.value)}
+                placeholder={initialPrompt || "Ask about schemes, RTI, forms, or any government service…"}
+                className="w-full h-12 pl-12 pr-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-indigo-200/60 focus:border-white/40 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/20 text-sm"
+                aria-label="Quick prompt"
+                defaultValue={initialPrompt || ""}
+              />
             </div>
-            <Progress value={62} />
-          </div>
-        </motion.div>
-      </section>
-
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Conversations"
-          value={data.loaded ? formatNumber(data.conversations.length) : "—"}
-          hint="Persistent, searchable history"
-          icon={MessageSquare}
-          delay={0.02}
-        />
-        <StatCard
-          label="Long-term memory"
-          value={data.loaded ? formatNumber(data.memories.length) : "—"}
-          hint="Lexically retrieved each turn"
-          icon={BrainCircuit}
-          accent="violet"
-          delay={0.06}
-        />
-        <StatCard
-          label="Active tools"
-          value={data.loaded ? `${enabledTools}/${data.tools.length || 0}` : "—"}
-          hint="Sensitive calls need approval"
-          icon={Wrench}
-          accent="emerald"
-          delay={0.1}
-        />
-        <StatCard
-          label="Default model"
-          value={<span className="text-base leading-snug">{defaultModel}</span>}
-          hint={data.models?.models.find((m) => m.id === (data.settings?.defaultModel ?? ""))?.provider ?? "Routing standby"}
-          icon={Cpu}
-          accent="blue"
-          delay={0.14}
-        />
-      </section>
-
-      <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="glass p-5"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <p className="eyebrow">Recent transmissions</p>
-              <h2 className="mt-1 text-lg font-semibold text-slate-100">Conversations</h2>
-            </div>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/chat">
-                Open workspace <ArrowUpRight className="h-3.5 w-3.5" />
-              </Link>
+            <Button type="submit" size="lg" className="h-12 shrink-0 bg-white text-indigo-700 hover:bg-indigo-50 font-medium">
+              Start <ArrowRight className="h-4 w-4" />
             </Button>
-          </div>
+          </form>
 
-          <div className="mt-4 space-y-1">
-            {data.conversations.slice(0, 5).map((conversation) => (
-              <Link
-                key={conversation.id}
-                href={`/chat?conversation=${conversation.id}`}
-                className="group flex items-start gap-3 rounded-xl border border-transparent px-3 py-3 transition-colors hover:border-white/[0.07] hover:bg-white/[0.025]"
+          <div className="mt-4 flex flex-wrap gap-2">
+            {SUGGESTED_PROMPTS.slice(0, 4).map((suggestion) => (
+              <button
+                key={suggestion}
+                type="button"
+                onClick={() => launch(suggestion)}
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[0.7rem] text-indigo-100 transition-colors hover:border-white/40 hover:bg-white/20"
               >
-                <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-400/15 bg-cyan-400/[0.05] text-cyan-300/80">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-medium text-slate-200 group-hover:text-cyan-100">
-                      {conversation.title}
-                    </p>
-                    {conversation.pinned ? <Badge variant="warning">Pinned</Badge> : null}
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-slate-500">
-                    {conversation.lastMessage ? truncateText(conversation.lastMessage, 120) : "No messages yet"}
-                  </p>
-                </div>
-                <div className="shrink-0 text-right">
-                  <p className="text-[0.62rem] text-slate-500">{relativeTime(conversation.updatedAt)}</p>
-                  <p className="mt-1 font-mono text-[0.58rem] uppercase tracking-[0.14em] text-slate-600">
-                    {conversation.messageCount} msg
-                  </p>
-                </div>
-              </Link>
+                {suggestion}
+              </button>
             ))}
-            {!data.conversations.length ? (
-              <div className="rounded-xl border border-dashed border-white/10 px-4 py-8 text-center">
-                <p className="text-sm text-slate-400">No conversations yet.</p>
-                <Button asChild variant="outline" size="sm" className="mt-3">
-                  <Link href="/chat">Start the first one</Link>
-                </Button>
-              </div>
-            ) : null}
           </div>
-        </motion.div>
-
-        <div className="space-y-4">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.14 }}
-            className="glass p-5"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="eyebrow">Inference matrix</p>
-                <h2 className="mt-1 text-lg font-semibold text-slate-100">Providers</h2>
-              </div>
-              <Badge variant={configuredCloud ? "default" : "warning"}>
-                {configuredCloud ? "Routing ready" : "Configure a provider"}
-              </Badge>
-            </div>
-            <div className="mt-4 space-y-2.5">
-              {[
-                { name: "Google Gemini", key: "gemini", ok: data.health?.providers.gemini },
-                { name: "Groq", key: "groq", ok: data.health?.providers.groq },
-                { name: "OpenRouter", key: "openrouter", ok: data.health?.providers.openrouter },
-              ].map((provider) => (
-                <div key={provider.key} className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.015] px-3 py-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <StatusDot tone={provider.ok ? "online" : "offline"} pulse={Boolean(provider.ok)} />
-                    <span className="text-sm text-slate-300">{provider.name}</span>
-                  </div>
-                  <span className={cn("text-[0.6rem] uppercase tracking-[0.16em]", provider.ok ? "text-emerald-300/80" : "text-slate-500")}>
-                    {provider.ok ? "Linked" : "No key"}
-                  </span>
-                </div>
-              ))}
-              <div className="flex items-center justify-between rounded-xl border border-white/[0.05] bg-white/[0.015] px-3 py-2.5">
-                <div className="flex items-center gap-2.5">
-                  <StatusDot tone="busy" />
-                  <span className="text-sm text-slate-300">Ollama local</span>
-                </div>
-                <span className="max-w-[10rem] truncate font-mono text-[0.56rem] text-slate-500">
-                  {data.health?.providers.ollama.endpoint ?? "localhost:11434"}
-                </span>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2 rounded-xl border border-cyan-400/10 bg-cyan-400/[0.03] px-3 py-2.5">
-              <ShieldCheck className="h-4 w-4 shrink-0 text-cyan-300/80" />
-              <p className="text-[0.68rem] leading-relaxed text-slate-400">
-                API keys stay server-side. Sensitive tools always require explicit approval.
-              </p>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.18 }}
-            className="glass p-5"
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="eyebrow">Execution plane</p>
-                <h2 className="mt-1 text-lg font-semibold text-slate-100">Recent runs</h2>
-              </div>
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/monitor">
-                  Monitor <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="mt-3 space-y-1.5">
-              {data.runs.slice(0, 4).map((run) => (
-                <div key={run.id} className="flex items-center gap-3 rounded-lg px-2 py-2">
-                  <span
-                    className={cn(
-                      "rounded-md border px-1.5 py-0.5 text-[0.55rem] uppercase tracking-wider",
-                      cnStatus(run.status),
-                    )}
-                  >
-                    {run.status.replace("_", " ")}
-                  </span>
-                  <p className="min-w-0 flex-1 truncate text-xs text-slate-400">{truncateText(run.input, 60)}</p>
-                  <span className="shrink-0 text-[0.58rem] text-slate-600">{relativeTime(run.createdAt)}</span>
-                </div>
-              ))}
-              {!data.runs.length ? <p className="px-2 py-4 text-xs text-slate-500">No executions recorded yet.</p> : null}
-            </div>
-          </motion.div>
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {[
-          { href: "/memory", title: "Memory grid", copy: "Inspect, add and curate durable knowledge.", icon: BrainCircuit },
-          { href: "/models", title: "Model routing", copy: "Switch providers, inspect free tiers, set defaults.", icon: Cpu },
-          { href: "/tools", title: "Tool governance", copy: "Grant capabilities and review tool schemas.", icon: Wrench },
-          { href: "/monitor", title: "Run telemetry", copy: "Trace iterations, tool calls, and errors.", icon: Zap },
-        ].map((module, index) => (
-          <motion.div
-            key={module.href}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35, delay: 0.06 * index }}
-          >
-            <Link
-              href={module.href}
-              className="group flex h-full items-start gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.015] p-4 transition-all hover:border-cyan-400/25 hover:bg-cyan-400/[0.03]"
+      <section className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="eyebrow">What can Sarkari Saathi do?</p>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-900">Quick actions for common tasks</h2>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {QUICK_ACTIONS.map((action, index) => (
+            <motion.div
+              key={action.href}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-cyan-300/80">
-                <module.icon className="h-4 w-4" />
-              </span>
-              <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-sm font-medium text-slate-200">
-                  {module.title}
-                  <ArrowUpRight className="h-3 w-3 text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-cyan-300" />
-                </p>
-                <p className="mt-1 text-xs leading-relaxed text-slate-500">{module.copy}</p>
-              </div>
-            </Link>
-          </motion.div>
-        ))}
+              <Link href={action.href} className="block">
+                <Card className="surface h-full p-5 surface-hover group">
+                  <div className="flex items-start gap-4">
+                    <span className={cn(
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
+                      `bg-${action.color}-100 text-${action.color}-600`,
+                    )}>
+                      <action.icon className="h-5 w-5" />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-slate-900 group-hover:text-indigo-700">{action.label}</h3>
+                        {action.badge && (
+                          <span className="ml-auto rounded-full bg-slate-100 px-2 py-0.5 text-[0.55rem] font-medium text-slate-500">
+                            {action.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{action.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
       </section>
 
-      <p className="pb-2 text-center font-mono text-[0.58rem] uppercase tracking-[0.24em] text-slate-700">
-        JARVIS harness · local-first · free-tier ready · approval-gated execution
+      {health && (
+        <section className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="eyebrow">System status</p>
+              <h2 className="mt-1 text-2xl font-semibold text-slate-900">Privacy & connectivity</h2>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="surface p-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                  <Shield className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-medium text-slate-900">Vault encryption</p>
+                  <p className="text-sm text-slate-600">AES-256-GCM with scrypt-derived keys</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Status</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-emerald-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    Active
+                  </span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="surface p-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600">
+                  <Sparkles className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-medium text-slate-900">AI provider</p>
+                  <p className="text-sm text-slate-600">Ollama local (privacy-first default)</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Model</span>
+                  <span className="font-mono text-indigo-600">{health.providers.ollama?.endpoint ?? "localhost:11434"}</span>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="surface p-5">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+                  <TrendingUp className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="font-medium text-slate-900">PII protection</p>
+                  <p className="text-sm text-slate-600">Automatic redaction with placeholders</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-slate-200">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-600">Mode</span>
+                  <span className="inline-flex items-center gap-1 font-medium text-indigo-600">
+                    <span className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                    Local-only for unknown PII
+                  </span>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </section>
+      )}
+
+      <section className="space-y-6 pt-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="eyebrow">How it works</p>
+            <h2 className="mt-1 text-2xl font-semibold text-slate-900">Three simple steps</h2>
+          </div>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          {[
+            { step: "01", title: "Ask naturally", description: "Type or speak in Hindi, Hinglish, or English. No special format needed." },
+            { step: "02", title: "Get guided help", description: "Sarkari Saathi asks clarifying questions, checks official sources, and prepares your documents." },
+            { step: "03", title: "Review & submit", description: "Approve every action. Download RTI drafts, filled forms, or submission instructions." },
+          ].map((item, index) => (
+            <motion.div
+              key={item.step}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 + index * 0.08, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Card className="surface p-5 relative">
+                <span className="absolute -top-3 right-4 font-mono text-3xl font-bold text-slate-200">{item.step}</span>
+                <h3 className="mt-2 font-semibold text-slate-900">{item.title}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-600">{item.description}</p>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <p className="text-center font-mono text-[0.6rem] uppercase tracking-[0.2em] text-slate-500">
+        Sarkari Saathi · privacy-first · local vault · free-tier ready · approval-gated execution
       </p>
     </PageContainer>
   );
 }
-

@@ -53,18 +53,15 @@ import { MessageBubble } from "./message-bubble";
 import { PermissionCard } from "./permission-card";
 import { ToolActivityList } from "./tool-activity";
 import { VaultControl } from "@/components/vault/vault-control";
+import { MemoryRecallPills } from "./memory-recall-pills";
 
-const CHAT_SUGGESTIONS = [
-  "What can this harness do?",
-  "Remember that I prefer concise answers",
-  "Draft a focused plan for my day",
-  "Explain how your tool approvals work",
-];
-
-const AGENT_SUGGESTIONS = [
-  "Inspect this project and summarize its architecture",
-  "Plan a small refactor, then wait for approval before writing",
-  "Check my workspace files and report what you find",
+const SARKARI_SUGGESTIONS = [
+  "Mere liye suitable government schemes batao",
+  "Mujhe RTI application draft karni hai",
+  "Mujhe ek government form fill karna hai",
+  "Mujhe kisi government service ki information chahiye",
+  "What schemes am I eligible for in Maharashtra?",
+  "Draft an RTI for pending passport application",
 ];
 
 function workspaceHeight() {
@@ -86,18 +83,17 @@ function Welcome({
   onSuggestion: (text: string) => void;
   disabled: boolean;
 }) {
-  const suggestions = mode === "agent" ? AGENT_SUGGESTIONS : CHAT_SUGGESTIONS;
+  const suggestions = SARKARI_SUGGESTIONS;
   return (
     <div className="flex min-h-full flex-col items-center justify-center px-4 py-10 text-center">
-      <AIOrb size={mode === "agent" ? 150 : 168} state="idle" />
-      <p className="eyebrow mt-7">{mode === "agent" ? "Autonomous workspace" : "Conversation channel"}</p>
-      <h1 className="mt-2 max-w-lg text-xl font-semibold tracking-tight text-slate-100 sm:text-2xl">
-        {mode === "agent" ? "Assign an objective. Watch it execute." : "How can I help you today?"}
+      <AIOrb size={168} state="idle" />
+      <p className="eyebrow mt-7">Your Government Services Assistant</p>
+      <h1 className="mt-2 max-w-lg text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
+        Namaste! Main Sarkari Saathi hoon.
       </h1>
-      <p className="mt-2 max-w-md text-xs leading-relaxed text-slate-500">
-        {mode === "agent"
-          ? "Jarvis plans across tools, pauses for sensitive actions, and reports every step in the trace."
-          : "Chat with live streaming, persistent memory, and tool access — all under your control."}
+      <p className="mt-2 max-w-md text-sm leading-relaxed text-slate-600">
+        Main aapki government schemes, RTI applications aur official forms mein madad kar sakta hoon.
+        Aap bataiye, aaj aapko kis kaam mein madad chahiye?
       </p>
       <div className="mt-6 grid w-full max-w-xl gap-2 sm:grid-cols-2">
         {suggestions.map((suggestion) => (
@@ -106,10 +102,10 @@ function Welcome({
             type="button"
             onClick={() => onSuggestion(suggestion)}
             disabled={disabled}
-            className="group flex items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.02] px-3.5 py-2.5 text-left text-[0.72rem] text-slate-400 transition-all hover:border-cyan-400/25 hover:bg-cyan-400/[0.04] hover:text-slate-200 disabled:opacity-40"
+            className="group flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-sm text-slate-600 transition-all hover:border-indigo-300 hover:bg-indigo-50 hover:text-slate-900 disabled:opacity-40"
           >
             <span>{suggestion}</span>
-            <ArrowRight className="h-3 w-3 shrink-0 text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-cyan-300" />
+            <ArrowRight className="h-3 w-3 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-600" />
           </button>
         ))}
       </div>
@@ -121,7 +117,7 @@ function StatusPill({ session }: { session: ReturnType<typeof useChatSession> })
   const label = session.awaitingApproval
     ? "Awaiting approval"
     : session.isStreaming
-      ? "Running"
+      ? "Generating..."
       : session.error
         ? "Error"
         : "Ready";
@@ -133,144 +129,10 @@ function StatusPill({ session }: { session: ReturnType<typeof useChatSession> })
         ? "offline"
         : "online";
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/[0.07] bg-white/[0.02] px-2.5 py-1 text-[0.58rem] uppercase tracking-[0.16em] text-slate-400">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[0.6rem] uppercase tracking-[0.16em] text-slate-600">
       <StatusDot tone={tone} pulse={tone !== "offline"} />
       {label}
     </span>
-  );
-}
-
-function AgentPanel({
-  session,
-  tools,
-  health,
-}: {
-  session: ReturnType<typeof useChatSession>;
-  tools: ToolInfo[];
-  health: HealthResponse | null;
-}) {
-  const enabledTools = tools.filter((tool) => tool.enabled);
-  const maxIterations = session.iteration?.maxIterations ?? health?.limits.maxIterations ?? 6;
-  const iteration = session.iteration?.iteration ?? 0;
-  const sensitiveCount = enabledTools.filter((tool) => tool.sensitivity === "sensitive").length;
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="glass p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-500">Run telemetry</p>
-          <StatusPill session={session} />
-        </div>
-        <div className="mt-4 grid grid-cols-2 gap-2">
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
-            <p className="text-[0.52rem] uppercase tracking-[0.16em] text-slate-600">Iteration</p>
-            <p className="mt-1 font-mono text-sm text-cyan-200">
-              {iteration}
-              <span className="text-slate-600">/{maxIterations}</span>
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
-            <p className="text-[0.52rem] uppercase tracking-[0.16em] text-slate-600">Tool calls</p>
-            <p className="mt-1 font-mono text-sm text-cyan-200">{session.toolActivity.length}</p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
-            <p className="text-[0.52rem] uppercase tracking-[0.16em] text-slate-600">Prompt tok</p>
-            <p className="mt-1 font-mono text-sm text-slate-300">
-              {session.usage?.promptTokens ? formatNumber(session.usage.promptTokens) : "—"}
-            </p>
-          </div>
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-2.5">
-            <p className="text-[0.52rem] uppercase tracking-[0.16em] text-slate-600">Output tok</p>
-            <p className="mt-1 font-mono text-sm text-slate-300">
-              {session.usage?.completionTokens ? formatNumber(session.usage.completionTokens) : "—"}
-            </p>
-          </div>
-        </div>
-        <div className="mt-3 h-1 overflow-hidden rounded-full bg-white/[0.05]">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-500"
-            style={{ width: `${Math.min(100, maxIterations ? (iteration / maxIterations) * 100 : 0)}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="glass flex min-h-[180px] flex-1 flex-col p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-500">Execution trace</p>
-          <Brain className="h-3.5 w-3.5 text-slate-600" />
-        </div>
-        <div className="mt-3 flex-1 space-y-2 overflow-y-auto scrollbar-thin">
-          {session.thinking.length ? (
-            session.thinking.map((line, index) => (
-              <div key={`${index}-${line.slice(0, 12)}`} className="flex gap-2">
-                <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-cyan-400/70" />
-                <p className="text-[0.68rem] leading-relaxed text-slate-400">{line}</p>
-              </div>
-            ))
-          ) : null}
-          {session.toolActivity.length ? <ToolActivityList activities={session.toolActivity} /> : null}
-          {!session.thinking.length && !session.toolActivity.length ? (
-            <p className="py-6 text-center text-[0.66rem] text-slate-600">
-              Trace appears here while the agent reasons and acts.
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div className="glass p-4">
-        <div className="flex items-center justify-between">
-          <p className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-500">Execution policy</p>
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-400/70" />
-        </div>
-        <div className="mt-3 space-y-1.5 text-[0.65rem] text-slate-400">
-          <div className="flex items-center justify-between">
-            <span>Armed tools</span>
-            <span className="font-mono text-slate-300">{enabledTools.length}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Gated tools</span>
-            <span className="font-mono text-amber-300/90">{sensitiveCount}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Shell access</span>
-            <span className={health?.safety.shellEnabled ? "text-amber-300/90" : "text-emerald-300/90"}>
-              {health ? (health.safety.shellEnabled ? "armed" : "disabled") : "—"}
-            </span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Iteration cap</span>
-            <span className="font-mono text-slate-300">{maxIterations}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span>Tool timeout</span>
-            <span className="font-mono text-slate-300">
-              {health ? `${Math.round(health.limits.toolTimeoutMs / 1000)}s` : "—"}
-            </span>
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1">
-          {enabledTools.slice(0, 8).map((tool) => (
-            <span
-              key={tool.name}
-              className={cn(
-                "rounded-md border px-1.5 py-0.5 font-mono text-[0.55rem]",
-                tool.sensitivity === "sensitive"
-                  ? "border-amber-400/20 bg-amber-400/[0.06] text-amber-200/80"
-                  : "border-white/[0.07] bg-white/[0.02] text-slate-500",
-              )}
-            >
-              {tool.name}
-            </span>
-          ))}
-        </div>
-        <Link
-          href="/tools"
-          className="mt-3 inline-flex items-center gap-1 text-[0.62rem] text-cyan-300/80 hover:text-cyan-200"
-        >
-          Manage tools <ArrowRight className="h-2.5 w-2.5" />
-        </Link>
-      </div>
-    </div>
   );
 }
 
@@ -298,14 +160,14 @@ function PrivacySummary({ privacy }: { privacy: PrivacyReport }) {
     <motion.div
       initial={{ opacity: 0, y: 4 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.03] px-3 py-2"
+      className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2"
     >
       <div className="flex flex-wrap items-center gap-2 text-[0.6rem]">
-        <span className="inline-flex items-center gap-1 font-medium text-emerald-200/90">
+        <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
           <ShieldCheck className="h-3 w-3" /> Privacy guard
         </span>
         {privacy.redacted ? (
-          <span className="text-slate-400">
+          <span className="text-slate-600">
             {privacy.placeholders.length} identifier
             {privacy.placeholders.length === 1 ? "" : "s"} replaced with placeholders
           </span>
@@ -313,19 +175,19 @@ function PrivacySummary({ privacy }: { privacy: PrivacyReport }) {
           <span className="text-slate-500">No personal identifiers detected in this turn</span>
         )}
         {local ? (
-          <Badge variant="warning" className="px-1.5 py-0 text-[0.5rem] uppercase tracking-wide">
-            <Cpu className="h-2.5 w-2.5" /> local model only
+          <Badge variant="secondary" className="px-1.5 py-0 text-[0.5rem] uppercase tracking-wide">
+            <Cpu className="h-2.5 w-2.5" /> Local model only
           </Badge>
         ) : (
           <Badge
             variant={privacy.verifiedClean ? "success" : "danger"}
             className="px-1.5 py-0 text-[0.5rem] uppercase tracking-wide"
           >
-            {privacy.verifiedClean ? "cloud · placeholders only" : "residual PII detected"}
+            {privacy.verifiedClean ? "Cloud · placeholders only" : "Residual PII detected"}
           </Badge>
         )}
         {!local && !privacy.verifiedClean ? (
-          <AlertTriangle className="h-3 w-3 text-rose-300" />
+          <AlertTriangle className="h-3 w-3 text-rose-500" />
         ) : null}
       </div>
 
@@ -334,7 +196,7 @@ function PrivacySummary({ privacy }: { privacy: PrivacyReport }) {
           {placeholders.map((placeholder) => (
             <code
               key={placeholder}
-              className="rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-mono text-[0.55rem] text-cyan-200/80"
+              className="rounded border border-slate-200 bg-slate-100 px-1.5 py-0.5 font-mono text-[0.55rem] text-indigo-700"
             >
               {placeholder}
             </code>
@@ -346,13 +208,13 @@ function PrivacySummary({ privacy }: { privacy: PrivacyReport }) {
       ) : null}
 
       {types.length ? (
-        <p className="mt-1 text-[0.55rem] text-slate-600">
+        <p className="mt-1 text-[0.55rem] text-slate-500">
           {types.map((type) => PII_TYPE_LABEL[type] ?? type).join(" · ")}
         </p>
       ) : null}
 
       {local ? (
-        <p className="mt-1 text-[0.55rem] leading-relaxed text-amber-200/60">
+        <p className="mt-1 text-[0.55rem] leading-relaxed text-amber-700">
           Unknown personal data was detected, so this turn stayed on the local model. Nothing was
           sent to a cloud provider.
         </p>
@@ -432,8 +294,6 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
       if (model.provider === "ollama") return true;
       return Boolean(byId.get(model.provider)?.configured);
     });
-    // Keep a conversation's custom model selectable even if it is not the
-    // current default and therefore not part of the server model list.
     const conversationModel = session.conversation?.model;
     if (conversationModel && !list.some((model) => model.id === conversationModel)) {
       const info = describeModelId(conversationModel);
@@ -482,7 +342,7 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
     if (!initialPrompt || promptSentRef.current) return;
     if (!modelsData || !selectedModel) return;
     promptSentRef.current = true;
-    router.replace(mode === "agent" ? "/agent" : "/chat");
+    router.replace("/assistant");
     void (async () => {
       if (initialConversation && session.conversationId !== initialConversation) {
         await loadConversation(initialConversation);
@@ -578,53 +438,40 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
     [sendText],
   );
 
-  const conversationTitle = session.conversation?.title ?? (mode === "agent" ? "New objective" : "New conversation");
+  const conversationTitle = session.conversation?.title ?? "New conversation";
   const showWelcome = !visibleMessages.length && !session.liveText && !session.isStreaming && !session.loadingConversation;
 
   return (
     <div className={cn("p-2 sm:p-3 lg:p-4", workspaceHeight())}>
       <div className="mx-auto flex h-full w-full max-w-[1600px] gap-3">
-        {mode === "chat" ? (
-          <div className="glass hidden w-[272px] shrink-0 overflow-hidden lg:block">
-            <ConversationList
-              currentId={session.conversationId}
-              refreshKey={historyVersion}
-              onSelect={handleSelect}
-              onNew={handleNew}
-              onDeleted={(id) => {
-                if (id === session.conversationId) handleNew();
-              }}
-            />
-          </div>
-        ) : null}
+        <div className="hidden w-[280px] shrink-0 overflow-hidden lg:block">
+          <ConversationList
+            currentId={session.conversationId}
+            refreshKey={historyVersion}
+            onSelect={handleSelect}
+            onNew={handleNew}
+            onDeleted={(id) => {
+              if (id === session.conversationId) handleNew();
+            }}
+          />
+        </div>
 
-        <div className="glass flex min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="flex items-center gap-2 border-b border-white/[0.05] bg-white/[0.01] px-3 py-2.5 sm:px-4">
-            {mode === "chat" ? (
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 lg:hidden"
-                onClick={() => setHistoryOpen(true)}
-                aria-label="Conversation history"
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            ) : (
-              <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-300">
-                <Terminal className="h-3.5 w-3.5" />
-              </span>
-            )}
+        <div className="surface flex min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-3 py-2.5 sm:px-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 lg:hidden"
+              onClick={() => setHistoryOpen(true)}
+              aria-label="Conversation history"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <h2 className="truncate text-[0.82rem] font-medium text-slate-200">{conversationTitle}</h2>
-                {mode === "agent" ? (
-                  <Badge variant="violet" className="hidden px-1.5 py-0 text-[0.52rem] sm:inline-flex">
-                    agent loop
-                  </Badge>
-                ) : null}
+                <h2 className="truncate text-sm font-medium text-slate-900">{conversationTitle}</h2>
               </div>
-              <p className="mt-0.5 truncate text-[0.58rem] uppercase tracking-[0.16em] text-slate-600">
+              <p className="mt-0.5 truncate text-[0.6rem] uppercase tracking-[0.14em] text-slate-500">
                 {selectedModel ? shortModel(selectedModel) : modelsError ? "model registry offline" : "no model selected"}
                 {visibleMessages.length ? ` · ${visibleMessages.length} messages` : ""}
               </p>
@@ -640,33 +487,20 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
               size="sm"
               className="h-8 gap-1.5"
               onClick={handleNew}
-              title={mode === "agent" ? "New objective" : "New conversation"}
+              title="New conversation"
             >
               <Plus className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{mode === "agent" ? "New objective" : "New"}</span>
+              <span className="hidden sm:inline">New</span>
             </Button>
           </div>
-
-          {mode === "agent" ? (
-            <div className="flex items-center gap-3 border-b border-white/[0.04] bg-white/[0.01] px-3 py-1.5 text-[0.58rem] text-slate-500 xl:hidden">
-              <span className="inline-flex items-center gap-1.5">
-                <Cpu className="h-3 w-3" /> loop {session.iteration?.iteration ?? 0}/
-                {session.iteration?.maxIterations ?? 6}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <Wrench className="h-3 w-3" /> {session.toolActivity.length} tools
-              </span>
-              <span className="ml-auto uppercase tracking-[0.14em]">{session.awaitingApproval ? "paused" : session.isStreaming ? "running" : "ready"}</span>
-            </div>
-          ) : null}
 
           <div ref={scrollRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-y-auto scrollbar-thin">
             <div className="mx-auto w-full max-w-3xl px-4 py-5 sm:px-6">
               {session.loadingConversation ? (
                 <div className="space-y-5 py-6">
-                  <div className="h-12 w-2/3 animate-pulse rounded-2xl bg-white/[0.03]" />
-                  <div className="ml-auto h-20 w-1/2 animate-pulse rounded-2xl bg-white/[0.03]" />
-                  <div className="h-28 w-3/4 animate-pulse rounded-2xl bg-white/[0.03]" />
+                  <div className="h-12 w-2/3 animate-pulse rounded-xl bg-slate-100" />
+                  <div className="ml-auto h-20 w-1/2 animate-pulse rounded-xl bg-slate-100" />
+                  <div className="h-28 w-3/4 animate-pulse rounded-xl bg-slate-100" />
                 </div>
               ) : showWelcome ? (
                 <Welcome mode={mode} onSuggestion={handleSuggestion} disabled={!selectedModel} />
@@ -694,9 +528,13 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
 
                   {session.thinking.length && !session.liveText ? (
                     <ThinkingIndicator
-                      label={mode === "agent" ? "Executing plan" : "Reasoning"}
+                      label="Sarkari Saathi is thinking"
                       detail={session.thinking[session.thinking.length - 1]}
                     />
+                  ) : null}
+
+                  {session.memoryRecall ? (
+                    <MemoryRecallPills memories={session.memoryRecall.memories} />
                   ) : null}
 
                   {session.liveText ? (
@@ -714,20 +552,20 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
                       modelLabel={shortModel(selectedModel)}
                     />
                   ) : session.isStreaming && !session.thinking.length && !session.toolActivity.length ? (
-                    <ThinkingIndicator label="Jarvis is thinking" detail="Connecting to the model…" />
+                    <ThinkingIndicator label="Sarkari Saathi is thinking" detail="Connecting to the model…" />
                   ) : null}
 
                   {session.error ? (
-                    <div className="flex items-start gap-2.5 rounded-xl border border-rose-400/25 bg-rose-400/[0.05] px-3.5 py-2.5">
-                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-300" />
+                    <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5">
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-rose-500" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-[0.7rem] font-medium text-rose-200">Run error</p>
-                        <p className="mt-0.5 break-words text-[0.68rem] leading-relaxed text-rose-200/70">{session.error}</p>
+                        <p className="text-sm font-medium text-rose-700">Run error</p>
+                        <p className="mt-0.5 break-words text-sm leading-relaxed text-rose-600">{session.error}</p>
                       </div>
                       <button
                         type="button"
                         onClick={() => session.setError(null)}
-                        className="rounded p-0.5 text-rose-300/60 hover:text-rose-200"
+                        className="rounded p-0.5 text-rose-400 hover:text-rose-600"
                         aria-label="Dismiss error"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -739,7 +577,7 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
             </div>
           </div>
 
-          <div className="border-t border-white/[0.05] bg-[#040b18]/50 p-2.5 sm:p-3">
+          <div className="border-t border-slate-200 bg-slate-50/50 p-2.5 sm:p-3">
             <div className="mx-auto w-full max-w-3xl space-y-2">
               <AnimatePresence>
                 {session.permission ? (
@@ -766,11 +604,7 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
                 toolsSupported={toolsSupported}
                 onOpenSystemPrompt={() => setSystemOpen(true)}
                 systemPromptActive={Boolean(systemPrompt.trim())}
-                placeholder={
-                  mode === "agent"
-                    ? "Describe an objective for the agent…"
-                    : "Message Jarvis… (Enter to send, Shift+Enter for newline)"
-                }
+                placeholder="Message Sarkari Saathi… (Enter to send, Shift+Enter for newline)"
                 footer={
                   session.usage?.completionTokens || session.usage?.promptTokens ? (
                     <span className="inline-flex items-center gap-1 font-mono">
@@ -779,33 +613,27 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1">
-                      <ShieldCheck className="h-2.5 w-2.5" /> approval-gated execution
+                      <ShieldCheck className="h-2.5 w-2.5" /> Approval-gated execution
                     </span>
                   )
                 }
               />
               {toolsSupported ? null : selectedModel ? (
-                <p className="px-1 text-[0.58rem] text-amber-300/60">This model does not support tool calling.</p>
+                <p className="px-1 text-[0.6rem] text-amber-600">This model does not support tool calling.</p>
               ) : null}
               {modelsError ? (
-                <p className="px-1 text-[0.58rem] text-rose-300/70">{modelsError}</p>
+                <p className="px-1 text-[0.6rem] text-rose-600">{modelsError}</p>
               ) : null}
             </div>
           </div>
         </div>
-
-        {mode === "agent" ? (
-          <aside className="hidden w-[318px] shrink-0 flex-col overflow-y-auto scrollbar-thin xl:flex">
-            <AgentPanel session={session} tools={tools} health={health} />
-          </aside>
-        ) : null}
       </div>
 
       <Dialog open={historyOpen} onOpenChange={setHistoryOpen}>
         <DialogContent className="max-w-sm gap-0 overflow-hidden p-0">
-          <DialogHeader className="border-b border-white/[0.06] px-4 py-3">
+          <DialogHeader className="border-b border-slate-200 px-4 py-3">
             <DialogTitle className="flex items-center gap-2 text-sm">
-              <History className="h-4 w-4 text-cyan-300" /> Conversation history
+              <History className="h-4 w-4 text-indigo-600" /> Conversation history
             </DialogTitle>
           </DialogHeader>
           <div className="h-[62vh]">
@@ -826,24 +654,24 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
         <DialogContent className="max-w-xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-violet-300" /> System instruction
+              <Settings2 className="h-4 w-4 text-violet-600" /> System instruction
             </DialogTitle>
             <DialogDescription>
-              Shapes how Jarvis responds. Leave blank to use the global instruction from Settings.
+              Shapes how Sarkari Saathi responds. Leave blank to use the global instruction from Settings.
             </DialogDescription>
           </DialogHeader>
           <Textarea
             value={systemPrompt}
             onChange={(event) => setSystemPrompt(event.target.value)}
-            placeholder={globalSystemPrompt || "You are JARVIS…"}
-            className="min-h-[180px] text-xs leading-relaxed"
+            placeholder={globalSystemPrompt || "You are Sarkari, a privacy-first assistant for Indian government paperwork..."}
+            className="min-h-[180px] text-sm leading-relaxed"
             maxLength={20000}
           />
-          <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-            <p className="flex items-center gap-1.5 text-[0.58rem] uppercase tracking-[0.16em] text-slate-500">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="flex items-center gap-1.5 text-[0.6rem] uppercase tracking-[0.14em] text-slate-500">
               <Sparkles className="h-2.5 w-2.5" /> Global default
             </p>
-            <p className="mt-1 line-clamp-3 text-[0.65rem] leading-relaxed text-slate-500">
+            <p className="mt-1 line-clamp-3 text-sm leading-relaxed text-slate-600">
               {globalSystemPrompt || "Loading global instruction…"}
             </p>
           </div>
@@ -868,10 +696,10 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
 export function ChatWorkspaceSkeleton() {
   return (
     <div className={cn("p-2 sm:p-3 lg:p-4", workspaceHeight())}>
-      <div className="glass flex h-full items-center justify-center rounded-2xl">
+      <div className="surface flex h-full items-center justify-center rounded-xl">
         <div className="flex flex-col items-center gap-3 text-slate-500">
-          <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
-          <p className="text-xs uppercase tracking-[0.2em]">Initializing workspace</p>
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
+          <p className="text-xs uppercase tracking-[0.15em]">Initializing assistant</p>
         </div>
       </div>
     </div>

@@ -98,11 +98,11 @@ function SectionCard({
     >
       <Card className="p-5">
         <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/[0.06] text-cyan-300">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-600">
             <Icon className="h-4 w-4" />
           </span>
           <div>
-            <h2 className="text-sm font-medium text-slate-100">{title}</h2>
+            <h2 className="text-sm font-medium text-slate-900">{title}</h2>
             <p className="mt-0.5 text-[0.68rem] leading-relaxed text-slate-500">{description}</p>
           </div>
         </div>
@@ -126,9 +126,9 @@ function SwitchRow({
   disabled?: boolean;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-xl border border-white/[0.06] bg-white/[0.015] px-3.5 py-3">
+    <div className="flex items-start justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
       <div>
-        <p className="text-xs font-medium text-slate-200">{label}</p>
+        <p className="text-xs font-medium text-slate-700">{label}</p>
         <p className="mt-0.5 text-[0.64rem] leading-relaxed text-slate-500">{description}</p>
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} aria-label={label} />
@@ -239,7 +239,7 @@ export default function SettingsPage() {
     return (
       <PageContainer>
         <div className="flex h-[60vh] flex-col items-center justify-center gap-3 text-slate-500">
-          <Loader2 className="h-6 w-6 animate-spin text-cyan-300" />
+          <Loader2 className="h-6 w-6 animate-spin text-indigo-600" />
           <p className="text-xs uppercase tracking-[0.2em]">Loading configuration</p>
         </div>
       </PageContainer>
@@ -249,9 +249,9 @@ export default function SettingsPage() {
   if (error || !draft || !saved) {
     return (
       <PageContainer>
-        <Card className="mx-auto mt-16 max-w-lg border-rose-400/20 bg-rose-400/[0.04] p-8 text-center">
-          <p className="text-sm text-rose-200">Configuration unavailable</p>
-          <p className="mt-1 text-xs text-rose-200/60">{error ?? "Settings could not be loaded."}</p>
+        <Card className="mx-auto mt-16 max-w-lg border-rose-200 bg-rose-50 p-8 text-center">
+          <p className="text-sm text-rose-700">Configuration unavailable</p>
+          <p className="mt-1 text-xs text-rose-600">{error ?? "Settings could not be loaded."}</p>
           <Button variant="secondary" className="mt-4" onClick={() => void load()}>
             <RefreshCw className="h-3.5 w-3.5" /> Retry
           </Button>
@@ -277,7 +277,7 @@ export default function SettingsPage() {
       <PageHeader
         eyebrow="System configuration"
         title="Settings"
-        description="Defaults for model routing, reasoning behavior, memory, and tooling. Credentials and shell allowlists remain environment-managed."
+        description="Configure defaults for model routing, reasoning behavior, memory, and tooling. Credentials and shell allowlists remain environment-managed."
         icon={Settings}
         actions={
           <>
@@ -298,9 +298,9 @@ export default function SettingsPage() {
       />
 
       {dirty ? (
-        <div className="mt-4 flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/[0.04] px-3.5 py-2">
-          <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_8px_2px_rgba(34,211,238,0.5)]" />
-          <p className="text-[0.66rem] text-cyan-200/80">You have unsaved configuration changes.</p>
+        <div className="mt-4 flex items-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2">
+          <span className="h-1.5 w-1.5 rounded-full bg-indigo-600" />
+          <p className="text-[0.66rem] text-indigo-700">You have unsaved configuration changes.</p>
         </div>
       ) : null}
 
@@ -344,7 +344,7 @@ export default function SettingsPage() {
                           >
                             <span className="flex items-center gap-2">
                               {model.label}
-                              {!available ? <span className="text-[0.55rem] text-amber-300/70">unconfigured</span> : null}
+                              {!available ? <span className="text-[0.55rem] text-amber-600">unconfigured</span> : null}
                             </span>
                           </SelectItem>
                         );
@@ -353,7 +353,7 @@ export default function SettingsPage() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-[0.62rem] text-slate-600">
+              <p className="text-[0.62rem] text-slate-500">
                 {currentModel ? (
                   <>
                     {currentModel.label} · {formatNumber(currentModel.contextWindow)} tokens ·{" "}
@@ -367,7 +367,7 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="custom-model">Custom Gemini model ID</Label>
+              <Label htmlFor="custom-model">Custom model ID</Label>
               <div className="flex gap-2">
                 <Input
                   id="custom-model"
@@ -392,7 +392,7 @@ export default function SettingsPage() {
                   Use
                 </Button>
               </div>
-              <p className="text-[0.6rem] text-slate-600">
+              <p className="text-[0.6rem] text-slate-500">
                 Use <code className="font-mono">provider:model</code>. Gemini accepts any valid
                 model ID; unavailable or non-free models return a provider error.
               </p>
@@ -401,7 +401,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="temperature">Temperature</Label>
-                <span className="font-mono text-xs text-cyan-300">{draft.temperature.toFixed(2)}</span>
+                <span className="font-mono text-xs text-indigo-600">{draft.temperature.toFixed(2)}</span>
               </div>
               <input
                 id="temperature"
@@ -411,15 +411,15 @@ export default function SettingsPage() {
                 step={0.05}
                 value={draft.temperature}
                 onChange={(event) => update("temperature", Number(event.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-800 accent-cyan-400"
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-indigo-600"
               />
-              <p className="text-[0.6rem] text-slate-600">Lower is deterministic; higher is more exploratory.</p>
+              <p className="text-[0.6rem] text-slate-500">Lower is deterministic; higher is more exploratory.</p>
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label htmlFor="maxIterations">Max agent iterations</Label>
-                <span className="font-mono text-xs text-cyan-300">{draft.maxIterations}</span>
+                <span className="font-mono text-xs text-indigo-600">{draft.maxIterations}</span>
               </div>
               <input
                 id="maxIterations"
@@ -429,9 +429,9 @@ export default function SettingsPage() {
                 step={1}
                 value={draft.maxIterations}
                 onChange={(event) => update("maxIterations", Number(event.target.value))}
-                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-800 accent-cyan-400"
+                className="h-1.5 w-full cursor-pointer appearance-none rounded-full bg-slate-200 accent-indigo-600"
               />
-              <p className="text-[0.6rem] text-slate-600">Caps tool-call loops per run to bound cost and latency.</p>
+              <p className="text-[0.6rem] text-slate-500">Caps tool-call loops per run to bound cost and latency.</p>
             </div>
 
             <SwitchRow
@@ -451,13 +451,13 @@ export default function SettingsPage() {
             <Textarea
               value={draft.systemPrompt}
               onChange={(event) => update("systemPrompt", event.target.value)}
-              placeholder="You are JARVIS…"
+              placeholder="You are Sarkari, a privacy-first assistant for Indian government paperwork..."
               maxLength={20000}
               className="min-h-[240px] text-xs leading-relaxed"
             />
-            <div className="flex items-center justify-between text-[0.6rem] text-slate-600">
+            <div className="flex items-center justify-between text-[0.6rem] text-slate-500">
               <span>Stored server-side with your harness settings.</span>
-              <span className={draft.systemPrompt.length > 18000 ? "text-amber-300" : ""}>
+              <span className={draft.systemPrompt.length > 18000 ? "text-amber-600" : ""}>
                 {formatNumber(draft.systemPrompt.length)} / 20,000
               </span>
             </div>
@@ -490,7 +490,7 @@ export default function SettingsPage() {
                 }
                 className="h-9 w-32 font-mono text-xs"
               />
-              <p className="text-[0.6rem] text-slate-600">Higher values add context but consume tokens.</p>
+              <p className="text-[0.6rem] text-slate-500">Higher values add context but consume tokens.</p>
             </div>
             <SwitchRow
               label="Tool calling"
@@ -498,11 +498,6 @@ export default function SettingsPage() {
               checked={draft.toolsEnabled}
               onCheckedChange={(value) => update("toolsEnabled", value)}
             />
-            <Button asChild variant="outline" size="sm" className="w-full">
-              <Link href="/tools">
-                <Wrench className="h-3.5 w-3.5" /> Manage tool permissions <ArrowUpRight className="h-3 w-3" />
-              </Link>
-            </Button>
           </SectionCard>
 
           <SectionCard
@@ -512,64 +507,64 @@ export default function SettingsPage() {
             delay={0.15}
           >
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-500">
                   <HardDrive className="h-2.5 w-2.5" /> Storage
                 </p>
-                <p className="mt-1 text-xs capitalize text-slate-300">{health?.storage ?? "—"}</p>
+                <p className="mt-1 text-xs capitalize text-slate-700">{health?.storage ?? "—"}</p>
               </div>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-500">
                   <Terminal className="h-2.5 w-2.5" /> Shell
                 </p>
-                <p className={cn("mt-1 text-xs", health?.safety.shellEnabled ? "text-amber-300" : "text-emerald-300")}>
+                <p className={cn("mt-1 text-xs", health?.safety.shellEnabled ? "text-amber-600" : "text-emerald-600")}>
                   {health ? (health.safety.shellEnabled ? "armed" : "disabled") : "—"}
                 </p>
               </div>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-500">
                   <ShieldCheck className="h-2.5 w-2.5" /> Approvals
                 </p>
-                <p className="mt-1 text-xs text-slate-300">
+                <p className="mt-1 text-xs text-slate-700">
                   {health?.safety.sensitiveToolsRequireApproval ? "per-call" : "off"}
                 </p>
               </div>
-              <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
-                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-600">
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <p className="flex items-center gap-1.5 text-[0.52rem] uppercase tracking-[0.14em] text-slate-500">
                   <Gauge className="h-2.5 w-2.5" /> Context budget
                 </p>
-                <p className="mt-1 text-xs text-slate-300">
+                <p className="mt-1 text-xs text-slate-700">
                   {health ? formatNumber(health.limits.contextTokenBudget) : "—"}
                 </p>
               </div>
             </div>
 
             <div>
-              <p className="mb-1.5 text-[0.56rem] uppercase tracking-[0.16em] text-slate-600">Shell allowlist</p>
+              <p className="mb-1.5 text-[0.56rem] uppercase tracking-[0.16em] text-slate-500">Shell allowlist</p>
               <div className="flex flex-wrap gap-1">
                 {health?.safety.shellAllowlist.length ? (
                   health.safety.shellAllowlist.map((command) => (
                     <span
                       key={command}
-                      className="rounded-md border border-white/[0.08] bg-white/[0.02] px-1.5 py-0.5 font-mono text-[0.58rem] text-slate-400"
+                      className="rounded-md border border-slate-200 bg-white px-1.5 py-0.5 font-mono text-[0.58rem] text-slate-600"
                     >
                       {command}
                     </span>
                   ))
                 ) : (
-                  <span className="text-[0.62rem] text-slate-600">No binaries allowlisted</span>
+                  <span className="text-[0.62rem] text-slate-500">No binaries allowlisted</span>
                 )}
               </div>
             </div>
 
             <div>
-              <p className="mb-1.5 text-[0.56rem] uppercase tracking-[0.16em] text-slate-600">Workspace</p>
-              <code className="block break-all rounded-lg border border-white/[0.06] bg-slate-950/60 px-2 py-1.5 font-mono text-[0.6rem] text-slate-500">
+              <p className="mb-1.5 text-[0.56rem] uppercase tracking-[0.16em] text-slate-500">Workspace</p>
+              <code className="block break-all rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 font-mono text-[0.6rem] text-slate-600">
                 {health?.safety.workspaceDir ?? "—"}
               </code>
             </div>
 
-            <div className="flex flex-wrap items-center gap-1.5 text-[0.58rem] text-slate-600">
+            <div className="flex flex-wrap items-center gap-1.5 text-[0.58rem] text-slate-500">
               <Badge variant="secondary" className="px-1.5 py-0 text-[0.5rem]">provider timeout {health ? `${Math.round(health.limits.providerTimeoutMs / 1000)}s` : "—"}</Badge>
               <Badge variant="secondary" className="px-1.5 py-0 text-[0.5rem]">tool timeout {health ? `${Math.round(health.limits.toolTimeoutMs / 1000)}s` : "—"}</Badge>
               <Badge variant="secondary" className="px-1.5 py-0 text-[0.5rem]">v{health?.version ?? "0.1.0"}</Badge>
@@ -578,21 +573,21 @@ export default function SettingsPage() {
 
           <Card className="p-4">
             <div className="flex items-start gap-3">
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-400/20 bg-violet-400/[0.06] text-violet-300">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-violet-200 bg-violet-50 text-violet-600">
                 <SlidersHorizontal className="h-4 w-4" />
               </span>
               <div>
-                <p className="text-xs font-medium text-slate-200">Configuration notes</p>
+                <p className="text-xs font-medium text-slate-700">Configuration notes</p>
                 <p className="mt-1 text-[0.64rem] leading-relaxed text-slate-500">
                   Provider credentials, shell enablement, and the binary allowlist are read from server environment
-                  variables at boot. Update <code className="rounded bg-slate-950/60 px-1 py-0.5 font-mono text-[0.58rem]">.env.local</code>{" "}
+                  variables at boot. Update <code className="rounded bg-slate-100 px-1 py-0.5 font-mono text-[0.58rem]">.env.local</code>{" "}
                   and restart to change them. This is a single-user local harness — add authentication before exposing it publicly.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Link href="/models" className="inline-flex items-center gap-1 text-[0.62rem] text-cyan-300/80 hover:text-cyan-200">
+                  <Link href="/models" className="inline-flex items-center gap-1 text-[0.62rem] text-indigo-600 hover:text-indigo-700">
                     Model manager <ArrowUpRight className="h-2.5 w-2.5" />
                   </Link>
-                  <Link href="/monitor" className="inline-flex items-center gap-1 text-[0.62rem] text-cyan-300/80 hover:text-cyan-200">
+                  <Link href="/monitor" className="inline-flex items-center gap-1 text-[0.62rem] text-indigo-600 hover:text-indigo-700">
                     Execution monitor <ArrowUpRight className="h-2.5 w-2.5" />
                   </Link>
                 </div>
@@ -602,8 +597,8 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="mt-5 flex flex-col items-start justify-between gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.015] px-4 py-3 sm:flex-row sm:items-center">
-        <p className="text-[0.62rem] text-slate-600">
+      <div className="mt-5 flex flex-col items-start justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 sm:flex-row sm:items-center">
+        <p className="text-[0.62rem] text-slate-500">
           {dirty ? "Unsaved changes are local to this page." : settings ? `Last updated ${new Date(settings.updatedAt).toLocaleString()}` : ""}
         </p>
         <div className="flex gap-2">
@@ -619,4 +614,3 @@ export default function SettingsPage() {
     </PageContainer>
   );
 }
-

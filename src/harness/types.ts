@@ -234,6 +234,7 @@ export interface ProviderAdapter {
 export interface RetrievedMemory {
   memory: MemoryRecord;
   score: number;
+  matchedTerms: string[];
 }
 
 export interface ChatRequest {
@@ -270,6 +271,11 @@ export type StreamEvent =
       types: PiiType[];
       route: "cloud" | "ollama";
       verifiedClean: boolean;
+    }
+  | {
+      type: "memory_recall";
+      runId: string;
+      memories: RetrievedMemory[];
     }
   | { type: "log"; level: LogLevel; message: string }
   | { type: "error"; message: string; code?: string }

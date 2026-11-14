@@ -116,12 +116,13 @@ describe("formatMemoryBlock", () => {
 
   it("includes ids, tags, and relevance scores", () => {
     const block = formatMemoryBlock([
-      { memory: memory({ id: "mem_42", content: "Prefers dark mode", tags: ["prefs"] }), score: 0.88 },
+      { memory: memory({ id: "mem_42", content: "Prefers dark mode", tags: ["prefs"] }), score: 0.88, matchedTerms: ["dark", "mode"] },
     ]);
     expect(block).toContain("mem_42");
     expect(block).toContain("prefs");
     expect(block).toContain("0.88");
     expect(block).toContain("Prefers dark mode");
+    expect(block).toContain("matched: dark, mode");
   });
 
   it("truncates oversized memory blocks", () => {
@@ -130,6 +131,7 @@ describe("formatMemoryBlock", () => {
         {
           memory: memory({ id: "long", content: "x".repeat(5000) }),
           score: 1,
+          matchedTerms: [],
         },
       ],
       500,

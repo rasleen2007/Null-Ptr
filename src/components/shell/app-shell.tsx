@@ -5,15 +5,14 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
-  Activity,
-  Bot,
-  BrainCircuit,
-  Cpu,
+  FileText,
+  FolderOpen,
+  Home,
   LayoutDashboard,
   MessageSquare,
   Settings,
-  ShieldCheck,
-  Wrench,
+  Shield,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 import { Toaster } from "sonner";
@@ -22,6 +21,8 @@ import { StatusDot } from "@/components/common/status-dot";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AccessGate } from "@/components/shell/access-gate";
 import type { HealthResponse } from "@/lib/api";
+
+const LARGE_TEXT_ICON = 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpath d=\'M4 7V4h16v3\'/%3E%3Cpath d=\'M9 20h6\'/%3E%3Cpath d=\'M12 4v16\'/%3E%3C/svg%3E")';
 
 interface NavItem {
   href: string;
@@ -32,66 +33,41 @@ interface NavItem {
 
 const SECTIONS: { label: string; items: NavItem[] }[] = [
   {
-    label: "Core",
-    items: [
-      { href: "/", label: "Dashboard", short: "Home", icon: LayoutDashboard },
-      { href: "/chat", label: "Chat workspace", short: "Chat", icon: MessageSquare },
-      { href: "/agent", label: "Agent workspace", short: "Agent", icon: Bot },
-    ],
+    label: "Main",
+items: [
+        { href: "/", label: "Home", short: "Home", icon: Home },
+        { href: "/chat", label: "AI Assistant", short: "Assistant", icon: MessageSquare },
+      ],
   },
   {
-    label: "Intelligence",
+    label: "Services",
     items: [
-      { href: "/memory", label: "Memory explorer", short: "Memory", icon: BrainCircuit },
-      { href: "/models", label: "Model manager", short: "Models", icon: Cpu },
-      { href: "/tools", label: "Tool manager", short: "Tools", icon: Wrench },
+      { href: "/services", label: "Government Services", short: "Services", icon: FileText },
+      { href: "/documents", label: "My Documents", short: "Documents", icon: FolderOpen },
     ],
   },
   {
     label: "System",
     items: [
-      { href: "/monitor", label: "Execution monitor", short: "Monitor", icon: Activity },
-      { href: "/vault", label: "Privacy vault", short: "Vault", icon: ShieldCheck },
-      { href: "/settings", label: "Settings", short: "Config", icon: Settings },
+      { href: "/activity", label: "Activity & Approvals", short: "Activity", icon: Sparkles },
+      { href: "/privacy", label: "Privacy Center", short: "Privacy", icon: Shield },
+      { href: "/settings", label: "Settings", short: "Settings", icon: Settings },
     ],
   },
 ];
 
 const ALL_ITEMS = SECTIONS.flatMap((section) => section.items);
 
-function JarvisMark() {
+function SarkariMark() {
   return (
     <span className="relative flex h-9 w-9 items-center justify-center">
-      <span className="absolute inset-0 rounded-xl bg-gradient-to-br from-cyan-400/30 to-blue-600/20 blur-md" />
-      <span className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-cyan-300/30 bg-slate-950/70">
-        <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#e0fbff,#22d3ee_45%,#0369a1_90%)] shadow-[0_0_12px_2px_rgba(34,211,238,0.55)]">
-          <span className="absolute inset-0 rounded-full border border-white/30" />
+      <span className="absolute inset-0 rounded-xl bg-gradient-to-br from-indigo-600/20 to-indigo-800/10" />
+      <span className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-indigo-300/30 bg-white">
+        <span className="relative flex h-4 w-4 items-center justify-center rounded-full bg-[radial-gradient(circle_at_35%_30%,#fff,#6366f1_45%,#3730a3_90%)] shadow-[0_0_12px_2px_rgba(99,102,241,0.4)]">
+          <span className="absolute inset-0 rounded-full border border-white/40" />
         </span>
-        <span className="absolute inset-1 rounded-lg border border-cyan-400/10" />
+        <span className="absolute inset-1 rounded-lg border border-indigo-300/20" />
       </span>
-    </span>
-  );
-}
-
-function Clock() {
-  const [now, setNow] = useState<Date | null>(null);
-  useEffect(() => {
-    setNow(new Date());
-    const timer = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(timer);
-  }, []);
-  const value = now
-    ? new Intl.DateTimeFormat("en-GB", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        hour12: false,
-        timeZone: "UTC",
-      }).format(now)
-    : "--:--:--";
-  return (
-    <span className="font-mono text-[0.7rem] tracking-[0.18em] text-slate-400">
-      {value} <span className="text-slate-600">UTC</span>
     </span>
   );
 }
@@ -111,24 +87,22 @@ function Sidebar({ activePath }: { activePath: string }) {
     };
   }, []);
 
-  const storageLabel = health ? (health.storage === "supabase" ? "Supabase link" : "Local store") : "Initializing";
+  const storageLabel = health ? (health.storage === "supabase" ? "Supabase linked" : "Local storage") : "Initializing";
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[252px] flex-col border-r border-white/[0.06] bg-[#030914]/80 backdrop-blur-2xl lg:flex">
-      <div className="flex items-center gap-3 px-5 pb-6 pt-6">
-        <JarvisMark />
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] flex-col border-r border-slate-200 bg-white/80 backdrop-blur-2xl lg:flex">
+      <div className="flex items-center gap-3 px-5 pb-6 pt-6 border-b border-slate-200">
+        <SarkariMark />
         <div>
-          <p className="text-[0.95rem] font-semibold tracking-[0.24em] text-slate-100">JARVIS</p>
-          <p className="text-[0.55rem] uppercase tracking-[0.22em] text-cyan-300/50">Personal AI harness</p>
+          <p className="text-base font-semibold tracking-[0.1em] text-slate-900">Sarkari Saathi</p>
+          <p className="text-[0.6rem] uppercase tracking-[0.15em] text-indigo-600/70">Government Services Assistant</p>
         </div>
       </div>
-
-      <div className="mx-5 h-px bg-gradient-to-r from-cyan-400/20 via-white/5 to-transparent" />
 
       <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-6 scrollbar-thin">
         {SECTIONS.map((section) => (
           <div key={section.label}>
-            <p className="px-3 pb-2 text-[0.58rem] font-medium uppercase tracking-[0.24em] text-slate-600">
+            <p className="px-3 pb-2 text-[0.6rem] font-medium uppercase tracking-[0.2em] text-slate-500">
               {section.label}
             </p>
             <div className="space-y-1">
@@ -140,21 +114,23 @@ function Sidebar({ activePath }: { activePath: string }) {
                     href={item.href}
                     className={cn(
                       "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
-                      active ? "text-cyan-100" : "text-slate-400 hover:bg-white/[0.035] hover:text-slate-200",
+                      active
+                        ? "bg-indigo-50 text-indigo-700"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900",
                     )}
                   >
                     {active ? (
                       <motion.span
                         layoutId="sidebar-active"
-                        className="absolute inset-0 rounded-xl border border-cyan-400/20 bg-gradient-to-r from-cyan-400/[0.12] to-blue-500/[0.04]"
+                        className="absolute inset-0 rounded-xl bg-indigo-100/50"
                         transition={{ type: "spring", stiffness: 380, damping: 32 }}
                       />
                     ) : null}
-                    <item.icon className={cn("relative h-4 w-4", active ? "text-cyan-300" : "text-slate-500")} />
+                    <item.icon className={cn("relative h-4 w-4", active ? "text-indigo-600" : "text-slate-400")} />
                     <span className="relative">{item.label}</span>
-                    {active ? (
-                      <span className="relative ml-auto h-1 w-1 rounded-full bg-cyan-300 shadow-[0_0_8px_2px_rgba(34,211,238,0.6)]" />
-                    ) : null}
+                    {active && (
+                      <span className="relative ml-auto h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                    )}
                   </Link>
                 );
               })}
@@ -163,15 +139,15 @@ function Sidebar({ activePath }: { activePath: string }) {
         ))}
       </nav>
 
-      <div className="border-t border-white/[0.06] p-4">
-        <div className="rounded-xl border border-white/[0.06] bg-white/[0.02] p-3">
+      <div className="border-t border-slate-200 p-4">
+        <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div className="flex items-center justify-between">
-            <span className="text-[0.6rem] uppercase tracking-[0.2em] text-slate-500">Storage</span>
+            <span className="text-[0.6rem] uppercase tracking-[0.15em] text-slate-500">Storage</span>
             <StatusDot tone={health ? "online" : "offline"} pulse={Boolean(health)} />
           </div>
-          <p className="mt-1.5 text-xs text-slate-300">{storageLabel}</p>
-          <p className="mt-0.5 font-mono text-[0.58rem] uppercase tracking-[0.18em] text-slate-600">
-            harness v0.1.0
+          <p className="mt-1.5 text-xs text-slate-600">{storageLabel}</p>
+          <p className="mt-0.5 font-mono text-[0.55rem] uppercase tracking-[0.15em] text-slate-500">
+            v0.1.0
           </p>
         </div>
       </div>
@@ -183,25 +159,56 @@ function TopBar({ activePath }: { activePath: string }) {
   const current = ALL_ITEMS.find((item) =>
     item.href === "/" ? activePath === "/" : activePath.startsWith(item.href),
   );
+  const [largeText, setLargeText] = useState(() => {
+    if (typeof window !== "undefined") {
+      return localStorage.getItem("saathi-large-text") === "true";
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("large-text", largeText);
+    localStorage.setItem("saathi-large-text", String(largeText));
+  }, [largeText]);
+
   return (
-    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-white/[0.05] bg-[#020617]/70 px-4 backdrop-blur-xl sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-4 border-b border-slate-200 bg-white/70 px-4 backdrop-blur-xl sm:px-6">
       <div className="flex min-w-0 items-center gap-3">
         <div className="lg:hidden">
-          <JarvisMark />
+          <SarkariMark />
         </div>
-        <div className="hidden items-center gap-2 text-[0.68rem] uppercase tracking-[0.22em] text-slate-500 sm:flex">
-          <span>JARVIS</span>
-          <span className="text-slate-700">/</span>
-          <span className="text-slate-300">{current?.label ?? "Console"}</span>
+        <div className="hidden items-center gap-2 text-[0.7rem] uppercase tracking-[0.15em] text-slate-500 sm:flex">
+          <span>Sarkari Saathi</span>
+          <span className="text-slate-300">/</span>
+          <span className="text-slate-700">{current?.label ?? "Home"}</span>
         </div>
-        <span className="text-xs text-slate-500 sm:hidden">{current?.short ?? "JARVIS"}</span>
+        <span className="text-xs text-slate-500 sm:hidden">{current?.short ?? "Saathi"}</span>
       </div>
-      <div className="flex items-center gap-4">
-        <div className="hidden items-center gap-2 rounded-full border border-emerald-400/15 bg-emerald-400/[0.05] px-3 py-1.5 sm:flex">
+      <div className="flex items-center gap-3">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              onClick={() => setLargeText((prev) => !prev)}
+              className={cn(
+                "flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1.5 text-[0.62rem] uppercase tracking-[0.15em] transition-colors hover:bg-slate-100",
+                largeText ? "text-indigo-600 border-indigo-200 bg-indigo-50" : "text-slate-500",
+              )}
+              aria-label={largeText ? "Disable large text" : "Enable large text"}
+              aria-pressed={largeText}
+            >
+              <span className="h-3.5 w-3.5" style={{ backgroundImage: LARGE_TEXT_ICON }} />
+              <span className="hidden sm:inline">Large text</span>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom" className="text-[0.6rem]">
+            {largeText ? "Disable large text mode" : "Enable large text mode"}
+          </TooltipContent>
+        </Tooltip>
+        <div className="hidden items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 sm:flex">
           <StatusDot tone="online" />
-          <span className="text-[0.62rem] uppercase tracking-[0.2em] text-emerald-300/90">Systems nominal</span>
+          <span className="text-[0.62rem] uppercase tracking-[0.15em] text-emerald-700/90">All systems operational</span>
         </div>
-        <Clock />
       </div>
     </header>
   );
@@ -209,7 +216,7 @@ function TopBar({ activePath }: { activePath: string }) {
 
 function MobileNav({ activePath }: { activePath: string }) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-stretch justify-around border-t border-white/[0.07] bg-[#030914]/95 px-1 backdrop-blur-2xl lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-30 flex h-16 items-stretch justify-around border-t border-slate-200 bg-white/95 px-1 backdrop-blur-2xl lg:hidden">
       {ALL_ITEMS.map((item) => {
         const active = item.href === "/" ? activePath === "/" : activePath.startsWith(item.href);
         return (
@@ -218,17 +225,17 @@ function MobileNav({ activePath }: { activePath: string }) {
             href={item.href}
             className={cn(
               "relative flex flex-1 flex-col items-center justify-center gap-1 rounded-lg px-1 py-1 transition-colors",
-              active ? "text-cyan-300" : "text-slate-500 active:text-slate-300",
+              active ? "text-indigo-600" : "text-slate-500 active:text-slate-700",
             )}
           >
             {active ? (
               <motion.span
                 layoutId="mobile-active"
-                className="absolute inset-x-2 top-0 h-px bg-cyan-300 shadow-[0_0_10px_2px_rgba(34,211,238,0.5)]"
+                className="absolute inset-x-2 top-0 h-px bg-indigo-500 shadow-[0_0_8px_2px_rgba(99,102,241,0.4)]"
               />
             ) : null}
-            <item.icon className="h-[1.05rem] w-[1.05rem]" />
-            <span className="text-[0.52rem] uppercase tracking-[0.1em]">{item.short}</span>
+            <item.icon className="h-[1.1rem] w-[1.1rem]" />
+            <span className="text-[0.5rem] uppercase tracking-[0.1em]">{item.short}</span>
           </Link>
         );
       })}
@@ -241,38 +248,30 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AccessGate>
       <TooltipProvider delayDuration={180}>
-        <ParticleFieldMount />
         <div className="relative z-10 min-h-screen">
           <Sidebar activePath={pathname} />
-          <div className="flex min-h-screen min-w-0 flex-col lg:pl-[252px]">
+          <div className="flex min-h-screen min-w-0 flex-col lg:pl-[260px]">
             <TopBar activePath={pathname} />
             <main className="relative flex-1 pb-16 lg:pb-0">{children}</main>
           </div>
           <MobileNav activePath={pathname} />
         </div>
         <Toaster
-          theme="dark"
+          theme="light"
           position="bottom-right"
           toastOptions={{
             style: {
-              background: "rgba(7, 16, 33, 0.95)",
-              border: "1px solid rgba(34, 211, 238, 0.18)",
-              color: "#e2e8f0",
+              background: "rgba(255, 255, 255, 0.98)",
+              border: "1px solid rgba(99, 102, 241, 0.2)",
+              color: "#1e293b",
               backdropFilter: "blur(16px)",
+              boxShadow: "0 10px 40px -10px rgba(15, 23, 42, 0.15)",
             },
           }}
         />
       </TooltipProvider>
     </AccessGate>
   );
-}
-
-function ParticleFieldMount() {
-  const [Field, setField] = useState<React.ComponentType | null>(null);
-  useEffect(() => {
-    void import("@/components/visual/particle-field").then((mod) => setField(() => mod.ParticleField));
-  }, []);
-  return Field ? <Field /> : null;
 }
 
 export { Tooltip, TooltipContent, TooltipTrigger };

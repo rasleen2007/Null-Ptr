@@ -12,6 +12,8 @@ import {
   type Scheme,
 } from "../../../sarkari/schemes";
 import { renderRtiDraft, type RtiLanguage } from "../../../sarkari/rti-templates";
+import { wrapUntrusted } from "../../../sarkari/untrusted";
+import { httpGet } from "../../../lib/http";
 
 /**
  * Government-facing tools.
@@ -20,7 +22,84 @@ import { renderRtiDraft, type RtiLanguage } from "../../../sarkari/rti-templates
  * the network and never use the vault. `rti_draft` and `form_fill` are sensitive
  * local writers and are the only tools that opt into `usesVault`, so the
  * orchestrator restores real values for them exactly at execution time.
+ *
+ * `gov_fetch` is a new tool that fetches live content from official .gov.in/.nic.in
+ * domains with strict validation, redirect checking, timeouts, size limits, and
+ * wraps output with wrapUntrusted to prevent prompt injection.
  */
+
+const ALLOWED_DOMAINS = [".gov.in", ".nic.in"];
+const MAX_FETCH_SIZE = 100_000; // 100KB
+const FETCH_TIMEOUT_MS = 10_000;
+
+function isAllowedDomain(url: string): boolean {
+  try {
+    const hostname = new URL(url).hostname.toLowerCase();
+    return ALLOWED_DOMAINS.some((domain) => hostname.endsWith(domain));
+  } catch {
+    return false;
+  }
+}
+
+function validateRedirects(originalUrl: string, finalUrl: string): boolean {
+  if (!isAllowedDomain(finalUrl)) return false;
+  const originalHost = new URL(originalUrl).hostname.toLowerCase();
+  const finalHost = new URL(finalUrl).hostname.toLowerCase();
+  return originalHost === finalHost || finalHost.endsWith(`.${originalHost}`);
+}
+
+async function fetchGovContent(url: string): Promise<{ content: string; truncated: boolean }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+
+  try {
+    const response = await httpGet(url, {
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Sarkari/1.0 (+https://github.com/rasleen2007/Null-Ptr)",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+      },
+    });
+
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
+      throw new Error(`Unsupported content type: ${contentType}`);
+    }
+
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error("No response body");
+
+    let received = 0;
+    const chunks: Uint8Array[] = [];
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      received += value.length;
+      if (received > MAX_FETCH_SIZE) {
+        throw new Error(`Response exceeds size limit of ${MAX_FETCH_SIZE} bytes`);
+      }
+      chunks.push(value);
+    }
+
+    const decoder = new TextDecoder("utf-8", { fatal: false });
+    const content = decoder.decode(Buffer.concat(chunks));
+    const truncated = received > MAX_FETCH_SIZE * 0.9;
+
+    return { content, truncated };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function extractTextFromHtml(html: string): string {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 function languageArg(value: unknown): "en" | "hi" {
   return value === "hi" ? "hi" : "en";
@@ -119,6 +198,67 @@ export const govLookupTool: ToolDefinition = {
       }),
       data: { ids: portals.map((portal) => portal.id) },
     };
+  },
+};
+
+export const govFetchTool: ToolDefinition = {
+  name: "gov_fetch",
+  description:
+    "Fetch live content from an official Indian government portal (.gov.in or .nic.in domain). Validates domain allowlist, follows redirects within the same domain, enforces 10s timeout and 100KB size limit, and wraps output with prompt-injection protection. Use for reading official pages when the curated index is insufficient.",
+  parameters: {
+    type: "object",
+    properties: {
+      url: {
+        type: "string",
+        description: "Full URL to fetch (must be .gov.in or .nic.in domain).",
+      },
+      maxChars: {
+        type: "number",
+        description: "Maximum characters to return (default 8000).",
+      },
+    },
+    required: ["url"],
+  },
+  category: "web",
+  sensitivity: "safe",
+  async execute(args) {
+    const url = stringArg(args, "url", { required: true, max: 500 });
+    const maxChars = numberArg(args, "maxChars", { min: 500, max: 50000, fallback: 8000 });
+
+    if (!isAllowedDomain(url)) {
+      return {
+        content: JSON.stringify({
+          error: "Domain not allowed. Only .gov.in and .nic.in domains are permitted.",
+          url,
+          allowedDomains: ALLOWED_DOMAINS,
+        }),
+        isError: true,
+      };
+    }
+
+    try {
+      const { content: html, truncated } = await fetchGovContent(url);
+      const text = extractTextFromHtml(html).slice(0, maxChars);
+      const wrapped = wrapUntrusted("gov_fetch", text, { maxChars });
+
+      return {
+        content: JSON.stringify({
+          url,
+          length: text.length,
+          truncated,
+          content: wrapped,
+        }),
+        data: { url, truncated },
+      };
+    } catch (error) {
+      return {
+        content: JSON.stringify({
+          error: error instanceof Error ? error.message : "Fetch failed",
+          url,
+        }),
+        isError: true,
+      };
+    }
   },
 };
 
@@ -502,4 +642,4 @@ export const formFillTool: ToolDefinition = {
   },
 };
 
-export const sarkariTools = [govLookupTool, schemeLookupTool, rtiDraftTool, formFillTool];
+export const sarkariTools = [govLookupTool, govFetchTool, schemeLookupTool, rtiDraftTool, formFillTool];

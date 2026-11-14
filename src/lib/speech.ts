@@ -16,7 +16,7 @@ export const MAX_SPEECH_CHARS = 4000;
 export function stripForSpeech(markdown: string): string {
   const cleaned = markdown
     .replace(/```[\s\S]*?```/g, " ")
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
     .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
     .replace(/`([^`]+)`/g, "$1")
     .replace(/\{\{[A-Z0-9_]+\}\}/g, "the stored value")
@@ -31,7 +31,7 @@ export function stripForSpeech(markdown: string): string {
     .trim();
 
   return cleaned.length > MAX_SPEECH_CHARS
-    ? `${cleaned.slice(0, MAX_SPEECH_CHARS).trimEnd()}…`
+    ? `${cleaned.slice(0, MAX_SPEECH_CHARS - 1).trimEnd()}…`
     : cleaned;
 }
 

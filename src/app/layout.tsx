@@ -5,23 +5,23 @@ import "./globals.css";
 import { AppShell } from "@/components/shell/app-shell";
 
 export const metadata: Metadata = {
-  title: "JARVIS — Personal AI Harness",
+  title: "Sarkari Saathi — Your Personal AI Government Services Assistant",
   description:
-    "A modular, local-first personal AI operating system with multi-provider routing, persistent memory, tool execution, and explicit permissions.",
-  applicationName: "JARVIS",
-  authors: [{ name: "JARVIS AI Harness" }],
-  keywords: ["AI harness", "agents", "Gemini", "Groq", "Ollama", "Next.js"],
+    "A privacy-first AI assistant for Indian government paperwork. File RTIs, apply for schemes, fill forms, and find official information — all with sovereign PII protection.",
+  applicationName: "Sarkari Saathi",
+  authors: [{ name: "Sarkari Saathi" }],
+  keywords: ["government services", "RTI", "schemes", "forms", "privacy", "AI assistant", "India"],
 };
 
 export const viewport: Viewport = {
-  themeColor: "#020617",
-  colorScheme: "dark",
+  themeColor: "#0B1D3A",
+  colorScheme: "light",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`dark ${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
-      <body className="font-sans">
+    <html lang="en" className={`${GeistSans.variable} ${GeistMono.variable}`} suppressHydrationWarning>
+      <body className="font-sans bg-white text-slate-900 antialiased">
         <AppShell>{children}</AppShell>
       </body>
     </html>

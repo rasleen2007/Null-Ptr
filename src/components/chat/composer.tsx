@@ -2,11 +2,13 @@
 
 import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowUp, Settings2, Square, Wrench } from "lucide-react";
+import { ArrowUp, Settings2, Square, Wrench, Mic, MicOff, X, Loader2 } from "lucide-react";
 import type { ModelInfo, ProviderStatus } from "@/harness/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ModelPicker } from "./model-picker";
+import { useVoice, type VoiceController } from "@/lib/use-voice";
+import { formatVoiceDuration } from "@/lib/speech";
 
 export function Composer({
   value,
@@ -46,6 +48,18 @@ export function Composer({
   footer?: ReactNode;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+  const voiceRef = useRef<VoiceController | null>(null);
+
+  const voice = useVoice({
+    onTranscript: (text) => {
+      onChange(value + (value ? " " : "") + text);
+    },
+    maxSeconds: 120,
+  });
+
+  useEffect(() => {
+    voiceRef.current = voice;
+  }, [voice]);
 
   useEffect(() => {
     const node = textareaRef.current;
@@ -55,6 +69,8 @@ export function Composer({
   }, [value]);
 
   const noModels = models.length === 0;
+  const isRecording = voice.status === "recording";
+  const isTranscribing = voice.status === "transcribing";
 
   return (
     <div className="space-y-2">
@@ -76,8 +92,21 @@ export function Composer({
               : placeholder ?? "Message Jarvis… (Enter to send, Shift+Enter for newline)"
           }
           className="max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-sm leading-relaxed text-slate-100 placeholder:text-slate-600 focus:outline-none"
-          disabled={disabled || noModels}
+          disabled={disabled || noModels || isRecording || isTranscribing}
         />
+
+        {(isRecording || isTranscribing) && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/10 rounded-2xl">
+            <div className="flex flex-col items-center gap-2 text-slate-50">
+              <span className="text-sm font-mono text-cyan-300">
+                {isRecording ? formatVoiceDuration(voice.seconds) : voice.detail ?? "Transcribing…"}
+              </span>
+              {isTranscribing && voice.model && (
+                <span className="text-[0.6rem] text-slate-300">{voice.model}</span>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-1.5 px-1 pb-0.5">
           <Button
@@ -113,8 +142,49 @@ export function Composer({
               providers={providers}
               value={selectedModel}
               onChange={onModelChange}
-              disabled={streaming}
+              disabled={streaming || isRecording || isTranscribing}
             />
+
+            {voice.supported && !streaming && !isRecording && !isTranscribing ? (
+              <Button
+                type="button"
+                size="icon"
+                variant={voice.error ? "destructive" : "ghost"}
+                onClick={voice.start}
+                disabled={disabled || noModels || !value.trim()}
+                title="Voice input"
+                aria-label="Start voice recording"
+              >
+                <Mic className="h-4 w-4" />
+              </Button>
+            ) : null}
+
+            {isRecording ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="secondary"
+                onClick={voice.stop}
+                title="Stop recording"
+                aria-label="Stop recording"
+              >
+                <Square className="h-3.5 w-3.5 fill-current" />
+              </Button>
+            ) : null}
+
+            {isTranscribing ? (
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={voice.cancel}
+                title="Cancel transcription"
+                aria-label="Cancel transcription"
+              >
+                <X className="h-3.5 w-3.5" />
+              </Button>
+            ) : null}
+
             {streaming ? (
               <Button type="button" size="icon" variant="secondary" onClick={onStop} title="Stop generation">
                 <Square className="h-3.5 w-3.5 fill-current" />
@@ -124,11 +194,20 @@ export function Composer({
                 type="button"
                 size="icon"
                 onClick={onSend}
-                disabled={!value.trim() || disabled || noModels}
+                disabled={!value.trim() || disabled || noModels || isRecording || isTranscribing}
                 title="Send"
               >
                 <ArrowUp className="h-4 w-4" />
               </Button>
+            )}
+
+            {voice.error && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-rose-400/10 border border-rose-400/20 px-2 py-1 text-[0.6rem] text-rose-200">
+                <span>{voice.error}</span>
+                <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={voice.clearError} title="Dismiss">
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
             )}
           </div>
         </div>

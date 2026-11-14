@@ -1,9 +1,9 @@
-import type { MemoryRecord } from "../types";
+import type { MemoryRecord, RetrievedMemory } from "../types";
 import type { Storage } from "../storage/types";
 import { formatMemoryBlock, retrieveMemories } from "./retrieval";
 
 export interface RetrievedMemoryContext {
-  memories: MemoryRecord[];
+  memories: RetrievedMemory[];
   promptBlock: string;
 }
 
@@ -32,7 +32,7 @@ export async function retrieveMemoryContext(
   }
 
   return {
-    memories: retrieved.map((entry) => entry.memory),
+    memories: retrieved,
     promptBlock: formatMemoryBlock(retrieved),
   };
 }

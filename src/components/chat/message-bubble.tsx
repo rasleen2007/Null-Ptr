@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Check, Copy, MessageSquare, Wrench } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Check, Copy, MessageSquare, Wrench, Volume2, VolumeX, X } from "lucide-react";
 import type { StoredMessage } from "@/harness/types";
 import { cn, formatTime } from "@/lib/utils";
 import { Markdown } from "./markdown";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useSpeech, type SpeechController } from "@/lib/use-speech";
+import { speechLangFor } from "@/lib/speech";
 
 function MiniCore({ active = false }: { active?: boolean }) {
   return (
@@ -32,6 +35,22 @@ export function MessageBubble({
   modelLabel?: string;
 }) {
   const [copied, setCopied] = useState(false);
+  const [speechState, setSpeechState] = useState<{ speaking: boolean; controller: SpeechController | null }>({
+    speaking: false,
+    controller: null,
+  });
+
+  const speech = useSpeech();
+  const speechRef = useRef<SpeechController | null>(null);
+  const activeSpeechRef = useRef<{ id: string; stop: () => void } | null>(null);
+
+  useEffect(() => {
+    speechRef.current = speech;
+    setSpeechState({ speaking: false, controller: speech });
+    return () => {
+      speechRef.current?.stop();
+    };
+  }, [speech]);
 
   if (message.role === "tool" || message.role === "system") return null;
 
@@ -47,6 +66,38 @@ export function MessageBubble({
       // ignore
     }
   }
+
+  const handleSpeak = () => {
+    if (!speechRef.current?.supported) return;
+
+    const cleanText = message.content.trim();
+    if (!cleanText) return;
+
+    if (activeSpeechRef.current && activeSpeechRef.current.id !== message.id) {
+      activeSpeechRef.current.stop();
+    }
+
+    if (speechState.speaking && activeSpeechRef.current?.id === message.id) {
+      speechRef.current?.stop();
+      activeSpeechRef.current = null;
+      setSpeechState({ ...speechState, speaking: false });
+      return;
+    }
+
+    speechRef.current!.speak(cleanText);
+    activeSpeechRef.current = {
+      id: message.id,
+      stop: () => speechRef.current?.stop(),
+    };
+    setSpeechState({ ...speechState, speaking: true });
+  };
+
+  const handleStop = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    speechRef.current?.stop();
+    activeSpeechRef.current = null;
+    setSpeechState({ ...speechState, speaking: false });
+  };
 
   if (isUser) {
     return (
@@ -66,6 +117,8 @@ export function MessageBubble({
     );
   }
 
+  const lang = speechLangFor(message.content);
+
   return (
     <div className="group flex gap-3">
       <MiniCore active={streaming} />
@@ -84,15 +137,51 @@ export function MessageBubble({
           ) : null}
           <span className="text-[0.58rem] text-slate-600">{formatTime(message.createdAt)}</span>
           {message.content ? (
-            <button
-              type="button"
-              onClick={copy}
-              className="ml-auto flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.58rem] text-slate-600 opacity-0 transition-opacity hover:text-cyan-200 group-hover:opacity-100"
-              aria-label="Copy message"
-            >
-              {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-              {copied ? "Copied" : ""}
-            </button>
+            <div className="ml-auto flex items-center gap-1.5">
+              <Button
+                type="button"
+                size="icon"
+                variant="ghost"
+                onClick={handleSpeak}
+                disabled={!speechState.controller?.supported}
+                className={cn(
+                  "h-8 w-8 rounded-lg transition-colors",
+                  speechState.speaking && activeSpeechRef.current?.id === message.id
+                    ? "bg-cyan-400/10 text-cyan-300"
+                    : "text-slate-500 hover:text-cyan-300",
+                )}
+                title={speechState.speaking && activeSpeechRef.current?.id === message.id ? "Stop speech" : "Read aloud"}
+                aria-label={speechState.speaking && activeSpeechRef.current?.id === message.id ? "Stop speech" : "Read aloud"}
+              >
+                {speechState.speaking && activeSpeechRef.current?.id === message.id ? (
+                  <VolumeX className="h-4 w-4" />
+                ) : (
+                  <Volume2 className="h-4 w-4" />
+                )}
+              </Button>
+              {speechState.speaking && activeSpeechRef.current?.id === message.id && (
+                <Button
+                  type="button"
+                  size="icon"
+                  variant="ghost"
+                  onClick={handleStop}
+                  className="h-8 w-8 rounded-lg text-amber-300 hover:text-amber-200"
+                  title="Stop speech"
+                  aria-label="Stop speech"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              )}
+              <button
+                type="button"
+                onClick={copy}
+                className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.58rem] text-slate-600 opacity-0 transition-opacity hover:text-cyan-200 group-hover:opacity-100"
+                aria-label="Copy message"
+              >
+                {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                {copied ? "Copied" : ""}
+              </button>
+            </div>
           ) : null}
         </div>
 
@@ -100,6 +189,23 @@ export function MessageBubble({
           <div className="mt-1.5">
             <Markdown content={message.content} />
             {showCursor ? <span className="ml-0.5 inline-block h-4 w-1.5 animate-blink bg-cyan-300 align-middle" /> : null}
+            {!streaming && message.content && (
+              <div className="mt-2 flex items-center gap-1.5 text-[0.55rem] text-slate-500">
+                <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 font-mono">
+                  {lang === "hi-IN" ? (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-orange-400" />
+                      Hindi (hi-IN)
+                    </>
+                  ) : (
+                    <>
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                      English (en-IN)
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
           </div>
         ) : toolCalls.length ? (
           <div className="mt-2 flex flex-wrap gap-1.5">

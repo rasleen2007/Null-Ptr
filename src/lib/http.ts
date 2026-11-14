@@ -110,3 +110,29 @@ export function streamResponse(
     },
   });
 }
+
+export async function httpGet(
+  url: string,
+  options: RequestInit & { signal?: AbortSignal } = {},
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, controller.signal])
+    : controller.signal;
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal,
+      headers: {
+        "User-Agent": "Sarkari/1.0",
+        ...options.headers,
+      },
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
