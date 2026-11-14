@@ -2,6 +2,7 @@ import { getHarness } from "@/harness";
 import { HarnessError } from "@/harness/errors";
 import { retrieveMemories } from "@/harness/memory/retrieval";
 import { jsonError, jsonOk, readJson } from "@/lib/http";
+import { redact } from "@/sarkari/tokenizer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -41,6 +42,14 @@ export async function POST(req: Request) {
         code: "invalid_body",
       });
     }
+    const sanitized = await redact(content);
+    if (sanitized.report.locked) {
+      throw new HarnessError(
+        "Memory contains personal identifiers but your vault is locked. Unlock the vault to save.",
+        { status: 423, code: "vault_locked" },
+      );
+    }
+    const safeContent = sanitized.text;
     const tags = Array.isArray(body.tags)
       ? body.tags
           .filter((tag): tag is string => typeof tag === "string")
@@ -54,7 +63,7 @@ export async function POST(req: Request) {
         : 0.6;
     const harness = await getHarness();
     const memory = await harness.store.createMemory({
-      content,
+      content: safeContent,
       tags,
       importance,
       source: "user",

@@ -1,6 +1,7 @@
-﻿import type { ToolDefinition } from "../../types";
+import type { ToolDefinition } from "../../types";
 import { numberArg, stringArg, stringArrayArg } from "../args";
 import { retrieveMemories } from "../../memory/retrieval";
+import { redact } from "../../../sarkari/tokenizer";
 
 export const memorySearchTool: ToolDefinition = {
   name: "memory_search",
@@ -64,10 +65,19 @@ export const memorySaveTool: ToolDefinition = {
   sensitivity: "safe",
   async execute(args, ctx) {
     const content = stringArg(args, "content", { required: true, min: 3, max: 2000 });
+    const sanitized = await redact(content);
+    if (sanitized.report.locked) {
+      return {
+        content:
+          "Cannot save memory containing personal identifiers while the personal vault is locked. Unlock the vault first.",
+        isError: true,
+      };
+    }
+    const safeContent = sanitized.text;
     const tags = stringArrayArg(args, "tags", { maxItems: 8, maxLength: 32 });
     const importance = numberArg(args, "importance", { min: 0, max: 1, fallback: 0.6 });
     const memory = await ctx.store.createMemory({
-      content,
+      content: safeContent,
       tags,
       importance,
       source: "agent",
@@ -97,7 +107,18 @@ export const memoryUpdateTool: ToolDefinition = {
   async execute(args, ctx) {
     const id = stringArg(args, "id", { required: true, max: 64 });
     const patch: Record<string, unknown> = {};
-    if (args.content !== undefined) patch.content = stringArg(args, "content", { min: 3, max: 2000 });
+    if (args.content !== undefined) {
+      const rawContent = stringArg(args, "content", { min: 3, max: 2000 });
+      const sanitized = await redact(rawContent);
+      if (sanitized.report.locked) {
+        return {
+          content:
+            "Cannot update memory with personal identifiers while the personal vault is locked. Unlock the vault first.",
+          isError: true,
+        };
+      }
+      patch.content = sanitized.text;
+    }
     if (args.tags !== undefined) patch.tags = stringArrayArg(args, "tags", { maxItems: 8 });
     if (args.importance !== undefined) {
       patch.importance = numberArg(args, "importance", { min: 0, max: 1 });

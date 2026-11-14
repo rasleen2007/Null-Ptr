@@ -1,4 +1,4 @@
-﻿import type {
+import type {
   AppSettings,
   ChatRequest,
   Conversation,
@@ -839,6 +839,12 @@ export function createHarness(options: {
     const controller = new AbortController();
     activeRuns.set(runId, controller);
     const settings = await settingsWithDefaults();
+
+    state.systemPrompt = composeSarkariPrompt(state.systemPrompt, {
+      context: `Today is ${new Date().toISOString().slice(0, 10)}. The personal vault is ${
+        isVaultUnlocked() ? "unlocked" : "locked"
+      }.`,
+    });
 
     const events = await runAgent({
       run,

@@ -1,6 +1,7 @@
 import { getHarness } from "@/harness";
 import { HarnessError } from "@/harness/errors";
 import { jsonError, jsonOk, readJson } from "@/lib/http";
+import { redact } from "@/sarkari/tokenizer";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,7 +22,14 @@ export async function PATCH(req: Request, context: Params) {
           code: "invalid_body",
         });
       }
-      patch.content = content.slice(0, 5000);
+      const sanitized = await redact(content);
+      if (sanitized.report.locked) {
+        throw new HarnessError(
+          "Memory contains personal identifiers but your vault is locked. Unlock the vault to update.",
+          { status: 423, code: "vault_locked" },
+        );
+      }
+      patch.content = sanitized.text.slice(0, 5000);
     }
     if (Array.isArray(body.tags)) {
       patch.tags = body.tags

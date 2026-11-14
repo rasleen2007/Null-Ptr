@@ -39,10 +39,31 @@ export interface SarkariPromptOptions {
 }
 
 const SARKARI_MARKER = "You are Sarkari";
+const CONTEXT_MARKER = "\n\nCurrent context:\n";
+const RULES_MARKER = "\n\nAdditional operating rules configured by the user:\n";
 
 function withContext(prompt: string, context: string | undefined): string {
   const trimmed = context?.trim();
-  return trimmed ? `${prompt}\n\nCurrent context:\n${trimmed}` : prompt;
+
+  let base = prompt;
+  let rules = "";
+  if (base.includes(RULES_MARKER)) {
+    const parts = base.split(RULES_MARKER);
+    base = parts[0];
+    rules = parts.slice(1).join(RULES_MARKER);
+  }
+  if (base.includes(CONTEXT_MARKER)) {
+    base = base.split(CONTEXT_MARKER)[0];
+  }
+
+  let result = base;
+  if (trimmed) {
+    result = `${result}${CONTEXT_MARKER}${trimmed}`;
+  }
+  if (rules) {
+    result = `${result}${RULES_MARKER}${rules}`;
+  }
+  return result;
 }
 
 export function buildSarkariSystemPrompt(options: SarkariPromptOptions = {}): string {

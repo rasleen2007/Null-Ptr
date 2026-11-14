@@ -1,4 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { mkdtemp, rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 import {
   MAX_JSON_BODY_BYTES,
   jsonError,
@@ -14,7 +17,9 @@ import {
   isAccessTokenRequired,
   verifyAccessToken,
 } from "@/lib/access";
-import { redactLogData } from "@/harness/engine/log";
+import { redactLogData, safeLog } from "@/harness/engine/log";
+import { memorySaveTool, memoryUpdateTool } from "@/harness/tools/builtin/memory";
+import { rememberValue, resetVaultForTests, unlockVault } from "@/sarkari/vault";
 
 beforeEach(() => {
   resetRateLimitsForTests();
@@ -101,6 +106,86 @@ describe("log redaction", () => {
     expect((redacted.nested as Record<string, unknown>).password).toBe("[redacted]");
     expect(String((redacted.nested as Record<string, unknown>).note)).toContain("[truncated]");
     expect(redacted.items).toHaveLength(20);
+  });
+
+  it("scrubs vault secret values from log messages and string values", async () => {
+    const vaultDir = await mkdtemp(path.join(os.tmpdir(), "log-vault-"));
+    process.env.JARVIS_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
+    resetVaultForTests();
+    await unlockVault("test-passphrase");
+    await rememberValue("aadhaar", "999941057058");
+
+    const scrubbed = redactLogData("User Aadhaar is 999941057058 in the database");
+    expect(scrubbed).not.toContain("999941057058");
+    expect(scrubbed).toContain("{{AADHAAR_1}}");
+
+    resetVaultForTests();
+    delete process.env.JARVIS_VAULT_FILE;
+    await rm(vaultDir, { recursive: true, force: true });
+  });
+});
+
+describe("memory PII protection", () => {
+  it("redacts PII to placeholders when saving memory with unlocked vault", async () => {
+    const vaultDir = await mkdtemp(path.join(os.tmpdir(), "mem-vault-"));
+    process.env.JARVIS_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
+    resetVaultForTests();
+    await unlockVault("test-passphrase");
+
+    let savedContent = "";
+    const mockStore = {
+      createMemory: async (item: { content: string }) => {
+        savedContent = item.content;
+        return { id: "mem_test", ...item, tags: [], importance: 0.6, accessCount: 0, createdAt: "", updatedAt: "" };
+      },
+    } as any;
+
+    const ctx = {
+      runId: "run_test",
+      signal: new AbortController().signal,
+      store: mockStore,
+      workspaceDir: vaultDir,
+      shellAllowlist: [],
+      toolTimeoutMs: 5000,
+    };
+
+    const res = await memorySaveTool.execute({ content: "Mera Aadhaar 999941057058 hai" }, ctx);
+    expect(res.isError).toBeFalsy();
+    expect(savedContent).not.toContain("999941057058");
+    expect(savedContent).toContain("{{AADHAAR_1}}");
+
+    resetVaultForTests();
+    delete process.env.JARVIS_VAULT_FILE;
+    await rm(vaultDir, { recursive: true, force: true });
+  });
+
+  it("rejects saving memory containing PII when vault is locked", async () => {
+    const vaultDir = await mkdtemp(path.join(os.tmpdir(), "mem-vault-locked-"));
+    process.env.JARVIS_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
+    resetVaultForTests();
+
+    const mockStore = {
+      createMemory: async () => {
+        throw new Error("Should not be called");
+      },
+    } as any;
+
+    const ctx = {
+      runId: "run_test",
+      signal: new AbortController().signal,
+      store: mockStore,
+      workspaceDir: vaultDir,
+      shellAllowlist: [],
+      toolTimeoutMs: 5000,
+    };
+
+    const res = await memorySaveTool.execute({ content: "Mera Aadhaar 999941057058 hai" }, ctx);
+    expect(res.isError).toBe(true);
+    expect(res.content).toContain("locked");
+
+    resetVaultForTests();
+    delete process.env.JARVIS_VAULT_FILE;
+    await rm(vaultDir, { recursive: true, force: true });
   });
 });
 
