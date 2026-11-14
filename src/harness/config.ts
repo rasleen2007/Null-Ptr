@@ -19,6 +19,8 @@ export interface ServerConfig {
   openRouterSiteUrl: string;
   openRouterAppName: string;
   ollamaBaseUrl: string;
+  /** Model used when unknown PII forces a local-only turn. */
+  localModel: string;
   supabaseUrl?: string;
   supabaseServiceRoleKey?: string;
   defaultModel: string;
@@ -46,6 +48,10 @@ export function getServerConfig(): ServerConfig {
     openRouterSiteUrl: env.OPENROUTER_SITE_URL?.trim() || "http://localhost:3000",
     openRouterAppName: env.OPENROUTER_APP_NAME?.trim() || "JARVIS AI Harness",
     ollamaBaseUrl: (env.OLLAMA_BASE_URL?.trim() || "http://localhost:11434").replace(/\/+$/, ""),
+    localModel:
+      env.SARKARI_LOCAL_MODEL?.trim() ||
+      env.JARVIS_LOCAL_MODEL?.trim() ||
+      "ollama:llama3.2",
     supabaseUrl: env.SUPABASE_URL?.trim() || undefined,
     supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined,
     defaultModel: env.JARVIS_DEFAULT_MODEL?.trim() || DEFAULT_MODEL_ID,

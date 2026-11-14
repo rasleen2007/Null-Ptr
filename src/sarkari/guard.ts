@@ -20,6 +20,7 @@ export type GuardRoute = "cloud" | "ollama";
 export interface GuardReport {
   redacted: boolean;
   detected: PiiType[];
+  placeholders: string[];
   unknown: DetectedPii[];
   verifiedClean: boolean;
   route: GuardRoute;
@@ -60,6 +61,7 @@ export async function guardOutbound<T extends GuardedMessage>(
 ): Promise<GuardOutcome<T>> {
   const unknown: DetectedPii[] = [];
   const detectedTypes = new Set<PiiType>();
+  const placeholders = new Set<string>();
   let anyRedacted = false;
   let verifiedClean = true;
 
@@ -76,6 +78,7 @@ export async function guardOutbound<T extends GuardedMessage>(
     let content = redactForModel(result.text, fields);
 
     for (const type of outcome.types) detectedTypes.add(type);
+    for (const placeholder of outcome.placeholders) placeholders.add(placeholder);
     mergeUnknown(unknown, outcome.unknown);
     mergeUnknown(unknown, detectPII(content));
 
@@ -110,6 +113,7 @@ export async function guardOutbound<T extends GuardedMessage>(
     report: {
       redacted: anyRedacted,
       detected: [...detectedTypes],
+      placeholders: [...placeholders],
       unknown,
       verifiedClean,
       route,

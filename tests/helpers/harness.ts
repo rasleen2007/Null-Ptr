@@ -29,6 +29,7 @@ export function createTestConfig(
     openRouterSiteUrl: "http://localhost:3000",
     openRouterAppName: "JARVIS test",
     ollamaBaseUrl: ollamaUrl,
+    localModel: "ollama:fake-chat",
     defaultModel: "ollama:fake-chat",
     maxIterations: 5,
     providerTimeoutMs: 4000,

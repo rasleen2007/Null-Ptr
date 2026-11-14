@@ -1,3 +1,5 @@
+import type { PiiType } from "../sarkari/pii";
+
 export type ProviderId = "gemini" | "groq" | "openrouter" | "ollama";
 
 export type MessageRole = "system" | "user" | "assistant" | "tool";
@@ -87,6 +89,16 @@ export interface RunState {
   deniedCallId?: string;
   denialNote?: string;
   useTools?: boolean;
+  /** Ingress/outbound redaction summary, safe to show in the UI (never contains values). */
+  privacy?: {
+    redacted: boolean;
+    placeholders: string[];
+    types: PiiType[];
+    route?: "cloud" | "ollama";
+    guardVerified?: boolean;
+  };
+  /** True when the turn is running on the local model because of unknown PII. */
+  tainted?: boolean;
 }
 
 export interface RunRecord {
@@ -152,6 +164,12 @@ export interface ToolDefinition {
   };
   category: ToolCategory;
   sensitivity: ToolSensitivity;
+  /**
+   * When true, placeholders in the tool arguments are restored to real vault
+   * values immediately before execution, and the result is scrubbed again.
+   * Never set this on network tools such as web_fetch or gov_lookup.
+   */
+  usesVault?: boolean;
   execute: (args: Record<string, unknown>, ctx: ToolExecuteContext) => Promise<ToolExecutionResult>;
 }
 
@@ -160,6 +178,7 @@ export interface ToolInfo {
   description: string;
   category: ToolCategory;
   sensitivity: ToolSensitivity;
+  usesVault?: boolean;
   parameters: ToolDefinition["parameters"];
   enabled: boolean;
   disabledReason?: string;
@@ -243,6 +262,15 @@ export type StreamEvent =
       reason: string;
     }
   | { type: "usage"; promptTokens?: number; completionTokens?: number }
+  | {
+      type: "privacy";
+      runId: string;
+      redacted: boolean;
+      placeholders: string[];
+      types: PiiType[];
+      route: "cloud" | "ollama";
+      verifiedClean: boolean;
+    }
   | { type: "log"; level: LogLevel; message: string }
   | { type: "error"; message: string; code?: string }
   | {

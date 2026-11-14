@@ -7,12 +7,26 @@ const STOPWORDS = new Set([
   "should", "would", "will", "shall", "may", "might", "must", "not", "but", "about", "into",
   "than", "then", "there", "here", "also", "just", "very", "more", "most", "some", "any",
   "all", "each", "every", "user", "please", "jarvis", "remember", "memory",
+  // Hinglish and Roman-Hindi function words
+  "hai", "hain", "tha", "thi", "the", "hoga", "hogi", "kar", "karo", "karna", "karta",
+  "karti", "kiya", "raha", "rahi", "rahe", "mera", "meri", "mere", "mujhe", "hum",
+  "humara", "humari", "aap", "aapka", "aapki", "tum", "tumhara", "yeh", "ye", "woh",
+  "voh", "kya", "kaise", "kaun", "kab", "kahan", "kyun", "kyu", "aur", "ya", "ek",
+  "mein", "me", "par", "se", "ko", "ka", "ki", "ke", "bhi", "nahi", "nahin", "haan",
+  // Devanagari function words
+  "है", "हैं", "था", "थी", "थे", "हो", "होता", "होती", "कर", "करो", "करना", "किया",
+  "रहा", "रही", "रहे", "मेरा", "मेरी", "मेरे", "मुझे", "हम", "हमारा", "हमारी",
+  "आप", "आपका", "आपकी", "तुम", "तुम्हारा", "यह", "ये", "वह", "वो", "क्या", "कैसे",
+  "कौन", "कब", "कहाँ", "कहां", "क्यों", "और", "या", "एक", "में", "पर", "से", "को",
+  "का", "की", "के", "भी", "नहीं", "हाँ", "जरूर", "ज़रूर",
 ]);
 
 export function tokenize(text: string): string[] {
   return text
+    .normalize("NFKC")
     .toLowerCase()
-    .replace(/[^a-z0-9\s_-]/g, " ")
+    // Keep Unicode letters, combining marks (Devanagari matras), digits, "_" and "-".
+    .replace(/[^\p{L}\p{M}\p{N}\s_-]+/gu, " ")
     .split(/\s+/)
     .map((token) => token.trim())
     .filter((token) => token.length >= 3 && !STOPWORDS.has(token));

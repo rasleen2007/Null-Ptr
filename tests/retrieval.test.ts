@@ -34,6 +34,20 @@ describe("tokenize", () => {
   it("drops short tokens", () => {
     expect(tokenize("a ab abc abcd")).toEqual(["abc", "abcd"]);
   });
+
+  it("keeps Devanagari words and matras", () => {
+    expect(tokenize("मेरा आधार नंबर याद रखें।")).toEqual([
+      "आधार",
+      "नंबर",
+      "याद",
+      "रखें",
+    ]);
+  });
+
+  it("drops common Hindi and Hinglish function words", () => {
+    expect(tokenize("Mera gaon Bihar mein hai")).toEqual(["gaon", "bihar"]);
+    expect(tokenize("मेरा गाँव बिहार में है")).toEqual(["गाँव", "बिहार"]);
+  });
 });
 
 describe("scoreMemory", () => {
@@ -73,6 +87,25 @@ describe("retrieveMemories", () => {
   it("returns no results for an unrelated query", () => {
     const memories = [memory({ content: "The project deadline is March 14" })];
     expect(retrieveMemories("volcanic geology", memories, 5)).toHaveLength(0);
+  });
+
+  it("recalls Hindi memories with Devanagari queries", () => {
+    const memories = [
+      memory({ id: "hindi", content: "मेरा आधार कार्ड नंबर 9999 है", tags: ["aadhaar"] }),
+      memory({ id: "other", content: "I enjoy hiking" }),
+    ];
+    const results = retrieveMemories("आधार नंबर", memories, 5);
+    expect(results).toHaveLength(1);
+    expect(results[0].memory.id).toBe("hindi");
+  });
+
+  it("recalls Hinglish memories with Hinglish queries", () => {
+    const memories = [
+      memory({ id: "bihar", content: "Mera gaon Bihar mein hai", tags: ["address"] }),
+      memory({ id: "other", content: "I enjoy hiking" }),
+    ];
+    const results = retrieveMemories("Bihar gaon", memories, 5);
+    expect(results[0].memory.id).toBe("bihar");
   });
 });
 

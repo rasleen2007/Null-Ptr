@@ -32,6 +32,15 @@ import { createToolRegistry, executeToolWithTimeout, getToolAvailability, requir
 import type { ToolRegistry } from "./tools";
 import { getActiveRuns } from "./engine/active-runs";
 import { safeLog } from "./engine/log";
+import {
+  extractPlaceholders,
+  getFields,
+  guardOutbound,
+  isVaultUnlocked,
+  redact,
+  redactForModel,
+  restoreDeep,
+} from "../sarkari";
 
 const MAX_MESSAGE_LENGTH = 30_000;
 
@@ -57,6 +66,7 @@ function toolInfo(tool: ToolDefinition, settings: AppSettings, config: ServerCon
     description: tool.description,
     category: tool.category,
     sensitivity: tool.sensitivity,
+    usesVault: tool.usesVault,
     parameters: tool.parameters,
     enabled: availability.enabled,
     disabledReason: availability.reason,
@@ -153,9 +163,9 @@ export function createHarness(options: {
     const resolved = resolveModel(state.model, providers);
     const providerId = resolved.provider;
     const modelInfo = resolved.info;
-    const enabledTools =
+    const enabledToolsFor = (info: ModelInfo) =>
       settings.toolsEnabled && state.useTools !== false
-        ? tools.availableForModel(settings, modelInfo)
+        ? tools.availableForModel(settings, info)
         : [];
 
     const memory = settings.memoryEnabled
@@ -213,6 +223,8 @@ export function createHarness(options: {
       let failure: string | undefined;
       let textBuffer = "";
       let assistantSaved = false;
+      let activeProviderId: ProviderId = providerId;
+      let activeModelInfo: ModelInfo = modelInfo;
 
       async function finish(next: RunStatus, reason?: string): Promise<void> {
         status = next;
@@ -324,9 +336,48 @@ export function createHarness(options: {
               category: tool.category,
             };
 
+            // Vault edge: real values are restored only here, and only for tools
+            // explicitly marked usesVault. Network tools never receive them.
+            let executionArgs = call.arguments;
+            if (tool.usesVault) {
+              const requested = extractPlaceholders(JSON.stringify(call.arguments ?? {}));
+              if (requested.length) {
+                if (!isVaultUnlocked()) {
+                  const lockedMessage = `Tool "${call.name}" needs the personal vault, but it is locked. Unlock the vault and retry; nothing was executed.`;
+                  yield {
+                    type: "tool_result",
+                    runId: run.id,
+                    call,
+                    content: lockedMessage,
+                    isError: true,
+                  };
+                  await addToolResult(call, lockedMessage, true);
+                  state.pendingIndex += 1;
+                  await persistRun({});
+                  continue;
+                }
+                executionArgs = restoreDeep(call.arguments);
+                const unresolved = extractPlaceholders(JSON.stringify(executionArgs ?? {}));
+                if (unresolved.length) {
+                  const unresolvedMessage = `Tool "${call.name}" references unknown placeholders: ${unresolved.join(", ")}. The tool was not executed.`;
+                  yield {
+                    type: "tool_result",
+                    runId: run.id,
+                    call,
+                    content: unresolvedMessage,
+                    isError: true,
+                  };
+                  await addToolResult(call, unresolvedMessage, true);
+                  state.pendingIndex += 1;
+                  await persistRun({});
+                  continue;
+                }
+              }
+            }
+
             const result = await executeToolWithTimeout(
               tool,
-              call.arguments,
+              executionArgs,
               {
                 runId: run.id,
                 conversationId: conversation.id,
@@ -339,14 +390,17 @@ export function createHarness(options: {
               config.toolTimeoutMs,
             );
 
+            // Scrub before the result reaches the browser, the model, or storage.
+            const safeResultContent = redactForModel(result.content);
+
             yield {
               type: "tool_result",
               runId: run.id,
               call,
-              content: result.content,
+              content: safeResultContent,
               isError: Boolean(result.isError),
             };
-            await addToolResult(call, result.content, Boolean(result.isError));
+            await addToolResult(call, safeResultContent, Boolean(result.isError));
             state.pendingIndex += 1;
             await persistRun({});
             continue;
@@ -367,20 +421,6 @@ export function createHarness(options: {
           await persistRun({});
           yield { type: "iteration", iteration: state.iteration, maxIterations };
 
-          if (state.iteration === 1) {
-            yield {
-              type: "thinking",
-              message: memory.memories.length
-                ? `Recalled ${memory.memories.length} long-term memory item(s). Routing to ${modelInfo.label}.`
-                : `Routing to ${modelInfo.label}.`,
-            };
-          } else {
-            yield {
-              type: "thinking",
-              message: `Continuing with ${modelInfo.label} (step ${state.iteration}/${maxIterations}).`,
-            };
-          }
-
           const history = await store.listMessages(conversation.id);
           const context = buildProviderContext({
             systemPrompt: state.systemPrompt,
@@ -398,6 +438,87 @@ export function createHarness(options: {
             data: { trimmedTurns: context.trimmedTurns, estimatedTokens: context.estimatedTokens },
           });
 
+          // Privacy egress guard: scrub any leaked vault value one last time and
+          // route unknown identifiers to the local model instead of the cloud.
+          const guarded = await guardOutbound(context.messages, getFields());
+          let active = resolved;
+          if (guarded.route === "ollama" && providerId !== "ollama") {
+            try {
+              active = resolveModel(config.localModel, providers);
+            } catch {
+              const localFailure = `This turn contains personal data that must stay local, but "${config.localModel}" is unavailable. Start Ollama or unlock your vault, then retry.`;
+              await finish("failed", localFailure);
+              await safeLog(store, {
+                runId: run.id,
+                conversationId: conversation.id,
+                level: "error",
+                event: "local_unavailable",
+                message: localFailure,
+                data: { localModel: config.localModel },
+              });
+              yield { type: "error", message: localFailure, code: "local_unavailable" };
+              yield { type: "done", runId: run.id, status: "failed", messageId: finalMessageId };
+              return;
+            }
+          }
+          activeProviderId = active.provider;
+          activeModelInfo = active.info;
+          const nextPlaceholders = [
+            ...new Set([...(state.privacy?.placeholders ?? []), ...guarded.report.placeholders]),
+          ];
+          const nextTypes = [
+            ...new Set([...(state.privacy?.types ?? []), ...guarded.report.detected]),
+          ];
+          state.privacy = {
+            redacted: Boolean(state.privacy?.redacted) || guarded.report.redacted,
+            placeholders: nextPlaceholders,
+            types: nextTypes,
+            route: guarded.route,
+            guardVerified: guarded.report.verifiedClean,
+          };
+          state.tainted = guarded.route === "ollama";
+          await persistRun({});
+
+          await safeLog(store, {
+            runId: run.id,
+            conversationId: conversation.id,
+            level: "debug",
+            event: "privacy_guard",
+            message: `Privacy guard: route=${guarded.route}, redacted=${guarded.report.redacted}, unknown=${guarded.report.unknown.length}, verifiedClean=${guarded.report.verifiedClean}.`,
+            data: {
+              route: guarded.route,
+              redacted: guarded.report.redacted,
+              unknown: guarded.report.unknown.length,
+              verifiedClean: guarded.report.verifiedClean,
+            },
+          });
+
+          yield {
+            type: "privacy",
+            runId: run.id,
+            redacted: state.privacy.redacted,
+            placeholders: nextPlaceholders,
+            types: nextTypes,
+            route: guarded.route,
+            verifiedClean: guarded.report.verifiedClean,
+          };
+
+          if (state.iteration === 1) {
+            const localNote =
+              guarded.route === "ollama" ? " Local-only: unknown personal data detected." : "";
+            yield {
+              type: "thinking",
+              message: memory.memories.length
+                ? `Recalled ${memory.memories.length} long-term memory item(s). Routing to ${activeModelInfo.label}.${localNote}`
+                : `Routing to ${activeModelInfo.label}.${localNote}`,
+            };
+          } else {
+            yield {
+              type: "thinking",
+              message: `Continuing with ${activeModelInfo.label} (step ${state.iteration}/${maxIterations}).`,
+            };
+          }
+
           textBuffer = "";
           assistantSaved = false;
           const toolCalls: ToolCall[] = [];
@@ -405,18 +526,18 @@ export function createHarness(options: {
 
           try {
             for await (const event of streamProviderWithRetry(
-              resolved.adapter,
+              active.adapter,
               {
-                model: modelInfo.model,
-                messages: context.messages,
-                tools: enabledTools,
+                model: activeModelInfo.model,
+                messages: guarded.messages,
+                tools: enabledToolsFor(activeModelInfo),
                 temperature: state.temperature,
               },
               signal,
             )) {
               if (event.type === "text") {
                 textBuffer += event.delta;
-                yield { type: "delta", text: event.delta };
+                yield { type: "delta", text: redactForModel(event.delta) };
               } else if (event.type === "tool_call") {
                 toolCalls.push(event.call);
               } else if (event.type === "usage") {
@@ -443,7 +564,7 @@ export function createHarness(options: {
               level: "error",
               event: "provider_error",
               message: failure,
-              data: { provider: providerId, model: modelInfo.id },
+              data: { provider: active.provider, model: activeModelInfo.id },
             });
             yield { type: "error", message: failure, code: "provider_error" };
             yield { type: "done", runId: run.id, status: "failed", messageId: finalMessageId };
@@ -461,14 +582,15 @@ export function createHarness(options: {
             return;
           }
 
+          const safeAssistantText = redactForModel(textBuffer);
           const assistant = await store.addMessage({
             conversationId: conversation.id,
             role: "assistant",
-            content: textBuffer,
+            content: safeAssistantText,
             toolCalls: toolCalls.length ? toolCalls : undefined,
-            provider: providerId,
-            model: modelInfo.id,
-            tokenEstimate: estimateTokens(textBuffer),
+            provider: activeProviderId,
+            model: activeModelInfo.id,
+            tokenEstimate: estimateTokens(safeAssistantText),
           });
           assistantSaved = true;
           finalMessageId = assistant.id;
@@ -481,7 +603,7 @@ export function createHarness(options: {
               level: "info",
               event: "run_completed",
               message: `Completed in ${state.iteration} iteration(s).`,
-              data: { provider: providerId, model: modelInfo.id, finishReason },
+              data: { provider: activeProviderId, model: activeModelInfo.id, finishReason },
             });
             yield { type: "done", runId: run.id, status: "completed", messageId: finalMessageId };
             return;
@@ -520,9 +642,9 @@ export function createHarness(options: {
             .addMessage({
               conversationId: conversation.id,
               role: "assistant",
-              content: `${textBuffer}\n\n[Interrupted before completion]`,
-              provider: providerId,
-              model: modelInfo.id,
+              content: `${redactForModel(textBuffer)}\n\n[Interrupted before completion]`,
+              provider: activeProviderId,
+              model: activeModelInfo.id,
             })
             .catch(() => undefined);
         }
@@ -538,6 +660,18 @@ export function createHarness(options: {
     if (message.length > MAX_MESSAGE_LENGTH) {
       throw new ValidationError(`Message exceeds ${MAX_MESSAGE_LENGTH} characters.`);
     }
+
+    // Privacy ingress: detect identifiers before anything is persisted, titled, or
+    // placed in the run input. The model and the browser only ever see placeholders.
+    const sanitized = await redact(message);
+    if (sanitized.report.locked) {
+      throw new HarnessError(
+        "This message contains personal identifiers but your vault is locked. Unlock the vault to continue; nothing was saved or sent.",
+        { status: 423, code: "vault_locked" },
+      );
+    }
+    const safeMessage = sanitized.text;
+    const redacted = sanitized.report.detected.length > 0;
 
     const settings = await settingsWithDefaults();
     let conversation: Conversation | null = null;
@@ -559,7 +693,7 @@ export function createHarness(options: {
 
     if (!conversation) {
       conversation = await store.createConversation({
-        title: deriveTitle(message),
+        title: deriveTitle(safeMessage),
         model: modelId,
         systemPrompt: input.systemPrompt?.trim() || undefined,
       });
@@ -578,8 +712,8 @@ export function createHarness(options: {
     const userMessage = await store.addMessage({
       conversationId: conversation.id,
       role: "user",
-      content: message,
-      tokenEstimate: estimateTokens(message),
+      content: safeMessage,
+      tokenEstimate: estimateTokens(safeMessage),
     });
 
     const state: RunState = {
@@ -590,6 +724,11 @@ export function createHarness(options: {
       pendingCalls: [],
       pendingIndex: 0,
       useTools: input.useTools ?? true,
+      privacy: {
+        redacted,
+        placeholders: sanitized.report.placeholders,
+        types: sanitized.report.types,
+      },
     };
 
     const runId = createId("run");
@@ -598,7 +737,7 @@ export function createHarness(options: {
       conversationId: conversation.id,
       kind,
       status: "running",
-      input: message,
+      input: safeMessage,
       state,
     });
 
@@ -617,6 +756,8 @@ export function createHarness(options: {
         kind,
         userMessageId: userMessage.id,
         supportsTools: resolved.info.supportsTools,
+        redacted,
+        piiTypes: sanitized.report.types,
       },
     });
 
