@@ -113,6 +113,35 @@ describe("privacy ingress through the harness", () => {
     const messages = await ctx.store.listMessages(source.conversationId);
     expect(messages[0].content).toBe("What documents do I need for PM-KISAN?");
   });
+
+  it("injects the Sarkari persona at runtime without rewriting stored settings", async () => {
+    ctx = await setupHarness(fake.url);
+    const before = await ctx.harness.getSettings();
+
+    const source = await ctx.harness.startChat({
+      message: "What documents do I need for PM-KISAN?",
+      model: "ollama:fake-chat",
+    });
+    await collectEvents(source);
+
+    const request = fake.chatRequests()[0];
+    const sent = request.body?.messages as { role: string; content: string }[];
+    expect(sent[0].role).toBe("system");
+    expect(sent[0].content).toContain("You are Sarkari");
+    expect(sent[0].content).toContain("Additional operating rules configured by the user:");
+    expect(sent[0].content).toContain(before.systemPrompt);
+    expect(sent[0].content).toContain("The personal vault is locked.");
+
+    // The composed prompt is for the model only. Stored settings and the
+    // conversation's own prompt must stay exactly as the user configured them.
+    const after = await ctx.harness.getSettings();
+    expect(after.systemPrompt).toBe(before.systemPrompt);
+    const conversation = await ctx.store.getConversation(source.conversationId);
+    expect(conversation?.systemPrompt).toBeUndefined();
+
+    const run = await ctx.store.getRun(source.runId);
+    expect(run?.state.systemPrompt).toContain("You are Sarkari");
+  });
 });
 
 describe("vault edge for approved government tools", () => {

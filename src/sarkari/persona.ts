@@ -38,10 +38,30 @@ export interface SarkariPromptOptions {
   context?: string;
 }
 
+const SARKARI_MARKER = "You are Sarkari";
+
+function withContext(prompt: string, context: string | undefined): string {
+  const trimmed = context?.trim();
+  return trimmed ? `${prompt}\n\nCurrent context:\n${trimmed}` : prompt;
+}
+
 export function buildSarkariSystemPrompt(options: SarkariPromptOptions = {}): string {
-  const sections = [SARKARI_SYSTEM_PROMPT];
-  if (options.context?.trim()) {
-    sections.push(`Current context:\n${options.context.trim()}`);
-  }
-  return sections.join("\n\n");
+  return withContext(SARKARI_SYSTEM_PROMPT, options.context);
+}
+
+/**
+ * Compose the prompt used for a run.
+ *
+ * Stored settings keep their original prompt: this only changes what is sent to the
+ * model. An installed base prompt becomes "additional operating rules" so users do
+ * not lose their own configuration when the persona is injected.
+ */
+export function composeSarkariPrompt(
+  basePrompt?: string,
+  options: SarkariPromptOptions = {},
+): string {
+  const base = basePrompt?.trim();
+  if (!base) return buildSarkariSystemPrompt(options);
+  if (base.includes(SARKARI_MARKER)) return withContext(base, options.context);
+  return `${buildSarkariSystemPrompt(options)}\n\nAdditional operating rules configured by the user:\n${base}`;
 }

@@ -33,6 +33,7 @@ import type { ToolRegistry } from "./tools";
 import { getActiveRuns } from "./engine/active-runs";
 import { safeLog } from "./engine/log";
 import {
+  composeSarkariPrompt,
   extractPlaceholders,
   getFields,
   guardOutbound,
@@ -687,7 +688,15 @@ export function createHarness(options: {
     // Store the canonical id (retired names are mapped, "models/" is stripped)
     // so conversation history and future runs agree with the provider.
     const modelId = resolved.info.id;
-    const systemPrompt = input.systemPrompt?.trim() || conversation?.systemPrompt || settings.systemPrompt;
+    // The stored prompt stays untouched; the Sarkari persona is composed at runtime
+    // so existing installs pick it up without rewriting their settings.
+    const baseSystemPrompt =
+      input.systemPrompt?.trim() || conversation?.systemPrompt || settings.systemPrompt;
+    const systemPrompt = composeSarkariPrompt(baseSystemPrompt, {
+      context: `Today is ${new Date().toISOString().slice(0, 10)}. The personal vault is ${
+        isVaultUnlocked() ? "unlocked" : "locked"
+      }.`,
+    });
     const kind = input.kind === "agent" ? "agent" : "chat";
     const isNewConversation = !conversation;
 

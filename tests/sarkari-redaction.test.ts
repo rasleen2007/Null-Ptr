@@ -5,6 +5,7 @@ import path from "node:path";
 import {
   SARKARI_SYSTEM_PROMPT,
   buildSarkariSystemPrompt,
+  composeSarkariPrompt,
 } from "@/sarkari/persona";
 import { detectPII, canonicalizePii, verhoeffCheckDigit, verhoeffValidate } from "@/sarkari/pii";
 import { renderRtiDraft } from "@/sarkari/rti-templates";
@@ -320,5 +321,24 @@ describe("Sarkari persona", () => {
     expect(SARKARI_SYSTEM_PROMPT.toLowerCase()).toContain("approval");
     const prompt = buildSarkariSystemPrompt({ context: "State: Bihar" });
     expect(prompt).toContain("State: Bihar");
+  });
+
+  it("composes the persona without discarding a configured base prompt", () => {
+    const base = "You are JARVIS. Be concise.";
+    const composed = composeSarkariPrompt(base, { context: "State: Bihar" });
+
+    expect(composed.startsWith("You are Sarkari")).toBe(true);
+    expect(composed).toContain("State: Bihar");
+    expect(composed).toContain("Additional operating rules configured by the user:");
+    expect(composed).toContain(base);
+
+    expect(composeSarkariPrompt()).toContain("You are Sarkari");
+    expect(composeSarkariPrompt("   ")).toContain("You are Sarkari");
+
+    const alreadySarkari = "You are Sarkari. Keep answers short.";
+    const kept = composeSarkariPrompt(alreadySarkari, { context: "State: Kerala" });
+    expect(kept.match(/You are Sarkari/g)).toHaveLength(1);
+    expect(kept).toContain("State: Kerala");
+    expect(kept).not.toContain("Additional operating rules");
   });
 });
