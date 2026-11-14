@@ -21,6 +21,12 @@ next-env.d.ts
 .env*.local
 .env.local
 
+# encrypted personal vault (see src/sarkari/vault.ts)
+*.enc.json
+
+# locally cached whisper models (downloaded on demand)
+/public/models/
+
 # testing
 /coverage
 .vitest

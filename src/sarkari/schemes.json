@@ -1,0 +1,218 @@
+[
+  {
+    "id": "pm-kisan",
+    "name": { "en": "PM-KISAN Samman Nidhi", "hi": "पीएम-किसान सम्मान निधि" },
+    "category": "Agriculture",
+    "description": {
+      "en": "Income support for small and marginal farmer families, paid in three yearly instalments.",
+      "hi": "छोटे और सीमांत किसान परिवारों के लिए वार्षिक आय सहायता, तीन किस्तों में।"
+    },
+    "benefits": ["₹6,000 per year", "Three instalments of ₹2,000", "Direct bank transfer"],
+    "eligibility": [
+      "Small or marginal farmer family with cultivable land",
+      "Aadhaar-linked bank account",
+      "Land records in the applicant's name"
+    ],
+    "documents": ["Aadhaar", "Land ownership records", "Bank passbook", "Mobile number"],
+    "applyUrl": "https://pmkisan.gov.in",
+    "tags": ["farmer", "agriculture", "income-support", "kisan"]
+  },
+  {
+    "id": "ayushman-bharat",
+    "name": { "en": "Ayushman Bharat PM-JAY", "hi": "आयुष्मान भारत प्रधानमंत्री जन आरोग्य योजना" },
+    "category": "Health",
+    "description": {
+      "en": "Health cover for eligible families for secondary and tertiary care hospitalisation.",
+      "hi": "पात्र परिवारों के लिए द्वितीयक और तृतीयक अस्पताल इलाज हेतु स्वास्थ्य बीमा।"
+    },
+    "benefits": ["Up to ₹5 lakh per family per year", "Cashless treatment at empanelled hospitals", "Covers pre-existing conditions"],
+    "eligibility": [
+      "Household listed in SECC deprivation criteria or eligible state database",
+      "No upper age limit",
+      "Aadhaar for identification"
+    ],
+    "documents": ["Aadhaar", "Ration card", "Ayushman card or eligibility slip", "Mobile number"],
+    "applyUrl": "https://pmjay.gov.in",
+    "tags": ["health", "insurance", "hospital", "ayushman"]
+  },
+  {
+    "id": "pmay-g",
+    "name": { "en": "Pradhan Mantri Awas Yojana (Gramin)", "hi": "प्रधानमंत्री आवास योजना (ग्रामीण)" },
+    "category": "Housing",
+    "description": {
+      "en": "Assistance to build a pucca house for houseless families and those living in kutcha houses in rural areas.",
+      "hi": "ग्रामीण क्षेत्रों में बेघर और कच्चे घरों में रहने वाले परिवारों के लिए पक्का घर बनाने हेतु सहायता।"
+    },
+    "benefits": ["Financial assistance in instalments", "Support for toilet and electricity connections", "MGNREGA wage support for construction"],
+    "eligibility": [
+      "Rural household without a pucca house",
+      "Name in the SECC 2011 housing deprivation list or state-approved list",
+      "No existing pucca house in the family"
+    ],
+    "documents": ["Aadhaar", "Job card", "Bank passbook", "Land documents", "SECC verification"],
+    "applyUrl": "https://pmayg.nic.in",
+    "tags": ["housing", "rural", "awas", "house"]
+  },
+  {
+    "id": "mgnrega",
+    "name": { "en": "MGNREGA Job Card", "hi": "मनरेगा जॉब कार्ड" },
+    "category": "Employment",
+    "description": {
+      "en": "Guaranteed wage employment for rural households, with a statutory right to 100 days of work per year.",
+      "hi": "ग्रामीण परिवारों को वर्ष में 100 दिन के काम का कानूनी अधिकार और मजदूरी।"
+    },
+    "benefits": ["Up to 100 days of paid work per household per year", "Unemployment allowance if work is not provided", "Equal wages for men and women"],
+    "eligibility": [
+      "Rural household with adult members",
+      "Willing to do unskilled manual work",
+      "Resident of the gram panchayat"
+    ],
+    "documents": ["Aadhaar", "Photograph", "Bank or post office account", "Residence proof"],
+    "applyUrl": "https://nrega.nic.in",
+    "tags": ["employment", "rural", "wages", "job-card", "mgnrega"]
+  },
+  {
+    "id": "pmuy",
+    "name": { "en": "Pradhan Mantri Ujjwala Yojana", "hi": "प्रधानमंत्री उज्ज्वला योजना" },
+    "category": "Women & Energy",
+    "description": {
+      "en": "Deposit-free LPG connections for women from eligible poor households.",
+      "hi": "पात्र गरीब परिवारों की महिलाओं के लिए बिना जमा राशि के एलपीजी कनेक्शन।"
+    },
+    "benefits": ["Free LPG connection", "First refill and stove support in some cases", "Subsidised refills under DBT"],
+    "eligibility": [
+      "Adult woman from a BPL or eligible household",
+      "No existing LPG connection in the household",
+      "Aadhaar-linked bank account"
+    ],
+    "documents": ["Aadhaar", "Ration card", "Bank passbook", "Address proof"],
+    "applyUrl": "https://pmuy.gov.in",
+    "tags": ["women", "lpg", "energy", "ujjwala"]
+  },
+  {
+    "id": "sukanya-samriddhi",
+    "name": { "en": "Sukanya Samriddhi Yojana", "hi": "सुकन्या समृद्धि योजना" },
+    "category": "Savings",
+    "description": {
+      "en": "Small savings scheme for a girl child with a long-term maturity benefit.",
+      "hi": "बालिका के लिए दीर्घकालिक बचत योजना।"
+    },
+    "benefits": ["Fixed interest rate set by the government", "Deposits from ₹250 to ₹1.5 lakh per year", "Matures 21 years after opening"],
+    "eligibility": [
+      "Girl child below 10 years of age",
+      "Account opened by a parent or legal guardian",
+      "Maximum two accounts per family in most cases"
+    ],
+    "documents": ["Birth certificate of the girl", "Guardian's Aadhaar and address proof", "Photograph", "Initial deposit"],
+    "applyUrl": "https://www.indiapost.gov.in",
+    "tags": ["girl-child", "savings", "women", "sukanya"]
+  },
+  {
+    "id": "atal-pension",
+    "name": { "en": "Atal Pension Yojana", "hi": "अटल पेंशन योजना" },
+    "category": "Pension",
+    "description": {
+      "en": "Government-backed pension scheme for workers in the unorganised sector.",
+      "hi": "असंगठित क्षेत्र के श्रमिकों के लिए सरकार समर्थित पेंशन योजना।"
+    },
+    "benefits": ["Guaranteed pension of ₹1,000–₹5,000 per month after 60", "Spouse pension option", "Nominee receives corpus"],
+    "eligibility": [
+      "Indian citizen aged 18 to 40",
+      "Savings bank or post office account",
+      "Not an income-tax payer in most cases"
+    ],
+    "documents": ["Aadhaar", "Bank passbook", "Mobile number", "Nominee details"],
+    "applyUrl": "https://www.npscra.nsdl.co.in",
+    "tags": ["pension", "unorganised", "atal", "retirement"]
+  },
+  {
+    "id": "nsap-widow-pension",
+    "name": { "en": "NSAP Widow Pension", "hi": "राष्ट्रीय सामाजिक सहायता कार्यक्रम - विधवा पेंशन" },
+    "category": "Social Security",
+    "description": {
+      "en": "Monthly pension for widows from below-poverty-line households under the National Social Assistance Programme.",
+      "hi": "राष्ट्रीय सामाजिक सहायता कार्यक्रम के तहत गरीबी रेखा से नीचे के परिवारों की विधवाओं के लिए मासिक पेंशन।"
+    },
+    "benefits": ["Monthly pension credited to the bank account", "State top-up may apply", "Direct benefit transfer"],
+    "eligibility": [
+      "Widow aged 18 to 79",
+      "Below-poverty-line household",
+      "Not receiving another NSAP pension"
+    ],
+    "documents": ["Death certificate of husband", "Aadhaar", "Ration card", "Bank passbook", "Age proof"],
+    "applyUrl": "https://nsap.nic.in",
+    "tags": ["pension", "widow", "women", "social-security", "nsap"]
+  },
+  {
+    "id": "post-matric-scholarship",
+    "name": { "en": "Post-Matric Scholarship for SC/ST Students", "hi": "अनुसूचित जाति/जनजाति विद्यार्थियों हेतु पोस्ट-मैट्रिक छात्रवृत्ति" },
+    "category": "Education",
+    "description": {
+      "en": "Scholarship support for SC/ST students pursuing education after Class 10.",
+      "hi": "कक्षा 10 के बाद पढ़ाई कर रहे अनुसूचित जाति/जनजाति विद्यार्थियों के लिए छात्रवृत्ति।"
+    },
+    "benefits": ["Maintenance allowance", "Non-refundable fees reimbursement", "Book and study material allowance"],
+    "eligibility": [
+      "SC or ST student",
+      "Enrolled in a recognised post-matriculation course",
+      "Family income within the scheme limit"
+    ],
+    "documents": ["Caste certificate", "Income certificate", "Aadhaar", "Bank passbook", "Previous marksheet", "Fee receipt"],
+    "applyUrl": "https://scholarships.gov.in",
+    "tags": ["education", "scholarship", "sc-st", "student"]
+  },
+  {
+    "id": "nfsa-ration-card",
+    "name": { "en": "NFSA Ration Card", "hi": "राष्ट्रीय खाद्य सुरक्षा अधिनियम राशन कार्ड" },
+    "category": "Food Security",
+    "description": {
+      "en": "Subsidised food grain for eligible households under the National Food Security Act.",
+      "hi": "राष्ट्रीय खाद्य सुरक्षा अधिनियम के तहत पात्र परिवारों को रियायती अनाज।"
+    },
+    "benefits": ["Subsidised wheat and rice", "Priority household or Antyodaya entitlement", "Portability through One Nation One Ration Card"],
+    "eligibility": [
+      "Eligible household under state NFSA criteria",
+      "No existing ration card in another state for the same family",
+      "Aadhaar for each adult member"
+    ],
+    "documents": ["Aadhaar", "Address proof", "Income certificate", "Family photograph", "Earlier ration card if any"],
+    "applyUrl": "https://nfsa.gov.in",
+    "tags": ["food", "ration", "nfsa", "family"]
+  },
+  {
+    "id": "pm-vishwakarma",
+    "name": { "en": "PM Vishwakarma", "hi": "पीएम विश्वकर्मा" },
+    "category": "Livelihood",
+    "description": {
+      "en": "Support for traditional artisans and craftspeople, including loans, training and toolkit incentives.",
+      "hi": "पारंपरिक कारीगरों और शिल्पकारों के लिए ऋण, प्रशिक्षण और टूलकिट सहायता।"
+    },
+    "benefits": ["Collateral-free loan up to ₹3 lakh", "Skill training with stipend", "Toolkit incentive and digital transaction support"],
+    "eligibility": [
+      "Traditional artisan or craftsperson in a listed trade",
+      "Age 18 or above",
+      "Not availed a similar central scheme loan recently"
+    ],
+    "documents": ["Aadhaar", "Bank passbook", "Mobile number", "Proof of trade or self-declaration"],
+    "applyUrl": "https://pmvishwakarma.gov.in",
+    "tags": ["artisan", "loan", "livelihood", "vishwakarma", "craft"]
+  },
+  {
+    "id": "e-shram",
+    "name": { "en": "e-Shram Registration", "hi": "ई-श्रम पंजीकरण" },
+    "category": "Workers",
+    "description": {
+      "en": "National database registration for unorganised workers, used to access welfare schemes.",
+      "hi": "असंगठित श्रमिकों का राष्ट्रीय डेटाबेस पंजीकरण, कल्याण योजनाओं के लिए।"
+    },
+    "benefits": ["UAN card", "Accident insurance cover", "Easier access to eligible welfare schemes"],
+    "eligibility": [
+      "Unorganised sector worker aged 16 to 59",
+      "Not a member of EPFO or ESIC",
+      "Aadhaar-linked mobile number"
+    ],
+    "documents": ["Aadhaar", "Bank passbook", "Mobile number"],
+    "applyUrl": "https://eshram.gov.in",
+    "tags": ["worker", "unorganised", "registration", "eshram", "labour"]
+  }
+]
