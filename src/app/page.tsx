@@ -28,9 +28,20 @@ interface QuickAction {
   label: string;
   description: string;
   icon: LucideIcon;
-  color: string;
+  color: QuickActionColor;
   badge?: string;
 }
+
+type QuickActionColor = "indigo" | "emerald" | "amber" | "violet" | "blue" | "rose";
+
+const QUICK_ACTION_COLORS: Record<QuickActionColor, string> = {
+  indigo: "bg-indigo-100 text-indigo-600",
+  emerald: "bg-emerald-100 text-emerald-600",
+  amber: "bg-amber-100 text-amber-600",
+  violet: "bg-violet-100 text-violet-600",
+  blue: "bg-blue-100 text-blue-600",
+  rose: "bg-rose-100 text-rose-600",
+};
 
 const QUICK_ACTIONS: QuickAction[] = [
   {
@@ -161,7 +172,6 @@ export default function DashboardPage() {
                 placeholder={initialPrompt || "Ask about schemes, RTI, forms, or any government service…"}
                 className="w-full h-12 pl-12 pr-4 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-indigo-200/60 focus:border-white/40 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-white/20 text-sm"
                 aria-label="Quick prompt"
-                defaultValue={initialPrompt || ""}
               />
             </div>
             <Button type="submit" size="lg" className="h-12 shrink-0 bg-white text-indigo-700 hover:bg-indigo-50 font-medium">
@@ -205,7 +215,7 @@ export default function DashboardPage() {
                   <div className="flex items-start gap-4">
                     <span className={cn(
                       "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl",
-                      `bg-${action.color}-100 text-${action.color}-600`,
+                      QUICK_ACTION_COLORS[action.color],
                     )}>
                       <action.icon className="h-5 w-5" />
                     </span>

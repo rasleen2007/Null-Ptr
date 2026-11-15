@@ -494,6 +494,9 @@ export function createHarness(options: {
               redacted: guarded.report.redacted,
               unknown: guarded.report.unknown.length,
               verifiedClean: guarded.report.verifiedClean,
+              // Placeholder names and PII type names only — never raw values.
+              placeholders: nextPlaceholders,
+              types: nextTypes,
             },
           });
 

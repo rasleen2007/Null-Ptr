@@ -45,7 +45,7 @@ export function getToolAvailability(
     return { enabled: false, reason: `Permission "${permissionKey}" is turned off.` };
   }
   if (tool.name === "shell_command" && !config.enableShell) {
-    return { enabled: false, reason: "Shell tool is disabled by JARVIS_ENABLE_SHELL." };
+    return { enabled: false, reason: "Shell tool is disabled by SAATHI_ENABLE_SHELL." };
   }
   if (MEMORY_TOOLS.has(tool.name) && !settings.memoryEnabled) {
     return { enabled: false, reason: "Long-term memory is disabled in settings." };

@@ -79,11 +79,11 @@ export function AIOrb({
 
       {showLabel ? (
         <div className="mt-8 flex flex-col items-center gap-1.5">
-          <div className="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.42em] text-cyan-200/80">
+          <div className="flex items-center gap-2 text-[0.68rem] uppercase tracking-[0.42em] text-indigo-700/80">
             <span
               className={cn(
                 "h-1.5 w-1.5 rounded-full",
-                active ? "bg-cyan-300 shadow-[0_0_10px_2px_rgba(34,211,238,0.8)]" : "bg-emerald-400",
+                active ? "bg-indigo-500 shadow-[0_0_10px_2px_rgba(79,70,229,0.6)]" : "bg-emerald-500",
               )}
             />
             {state === "thinking"
@@ -94,8 +94,8 @@ export function AIOrb({
                   ? "Offline"
                   : "Core online"}
           </div>
-          <p className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-500">
-            Neural orchestration layer
+          <p className="font-mono text-[0.6rem] uppercase tracking-[0.3em] text-slate-400">
+            Sovereign privacy layer
           </p>
         </div>
       ) : null}

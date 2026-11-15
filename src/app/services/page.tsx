@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowRight,
@@ -84,7 +83,13 @@ const SERVICES: Array<{
   },
 ];
 
-function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
+function ServiceCard({
+  service,
+  onSelect,
+}: {
+  service: (typeof SERVICES)[0];
+  onSelect: (prompt: string) => void;
+}) {
   const Icon = service.icon;
   const colorClasses = {
     indigo: "bg-indigo-50 border-indigo-200 text-indigo-700",
@@ -112,6 +117,7 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
             <button
               key={i}
               type="button"
+              onClick={() => onSelect(prompt)}
               className={cn(
                 "flex items-center gap-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-left text-sm text-slate-600 transition-all hover:border-indigo-300 hover:bg-indigo-50"
               )}
@@ -125,9 +131,7 @@ function ServiceCard({ service }: { service: typeof SERVICES[0] }) {
       <CardFooter className="pt-0">
         <Button
           className="w-full"
-          onClick={() => {
-            const router = window.location.href.includes("/services") ? null : null;
-          }}
+          onClick={() => onSelect(service.prompts[0])}
         >
           Open in AI Assistant <ArrowRight className="h-3.5 w-3.5 ml-1" />
         </Button>
@@ -205,7 +209,11 @@ export default function ServicesPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {SERVICES.map((service) => (
-              <ServiceCard key={service.id} service={service} />
+              <ServiceCard
+                key={service.id}
+                service={service}
+                onSelect={(prompt) => handleServiceClick(service.id, prompt)}
+              />
             ))}
           </div>
 

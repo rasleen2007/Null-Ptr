@@ -35,13 +35,13 @@ let dir: string;
 
 beforeEach(async () => {
   dir = await mkdtemp(path.join(os.tmpdir(), "sarkari-redaction-"));
-  process.env.JARVIS_VAULT_FILE = path.join(dir, "vault.enc.json");
+  process.env.SAATHI_VAULT_FILE = path.join(dir, "vault.enc.json");
   resetVaultForTests();
 });
 
 afterEach(async () => {
   resetVaultForTests();
-  delete process.env.JARVIS_VAULT_FILE;
+  delete process.env.SAATHI_VAULT_FILE;
   await rm(dir, { recursive: true, force: true });
 });
 

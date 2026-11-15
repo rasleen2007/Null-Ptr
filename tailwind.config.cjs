@@ -1,6 +1,7 @@
-import type { Config } from "tailwindcss";
+/** @type {import('tailwindcss').Config} */
+const tailwindAnimate = require("tailwindcss-animate");
 
-const config: Config = {
+module.exports = {
   darkMode: ["class"],
   content: [
     "./src/pages/**/*.{ts,tsx}",
@@ -48,9 +49,17 @@ const config: Config = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        cyan: {
-          400: "#22d3ee",
-          500: "#06b6d4",
+        saffron: {
+          50: "#fff8ed",
+          100: "#ffefd4",
+          200: "#ffdba8",
+          300: "#ffc171",
+          400: "#ff9d38",
+          500: "#fe8012",
+          600: "#ef6408",
+          700: "#c64b09",
+          800: "#9d3c10",
+          900: "#7e3310",
         },
         electric: "#3b82f6",
       },
@@ -94,6 +103,10 @@ const config: Config = {
           "85%": { opacity: "0.6" },
           "100%": { transform: "translateY(1000%)", opacity: "0" },
         },
+        blink: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -103,14 +116,13 @@ const config: Config = {
         shimmer: "shimmer 2.4s linear infinite",
         float: "float 6s ease-in-out infinite",
         scan: "scan 3.5s linear infinite",
+        blink: "blink 1s step-end infinite",
       },
       backgroundImage: {
         "grid-glow":
           "radial-gradient(circle at 50% 0%, rgba(34,211,238,0.08), transparent 60%)",
       },
-    },
+},
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindAnimate],
 };
-
-export default config;

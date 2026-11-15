@@ -74,7 +74,7 @@ export function Composer({
 
   return (
     <div className="space-y-2">
-      <div className="glass-strong relative rounded-2xl p-2 transition-colors focus-within:border-cyan-400/25">
+      <div className="glass-strong relative rounded-2xl p-2 transition-colors focus-within:border-indigo-300">
         <textarea
           ref={textareaRef}
           value={value}
@@ -89,20 +89,20 @@ export function Composer({
           placeholder={
             noModels
               ? "Add a provider key or start Ollama to begin…"
-              : placeholder ?? "Message Jarvis… (Enter to send, Shift+Enter for newline)"
+              : placeholder ?? "Message Sarkari Saathi… (Enter to send, Shift+Enter for newline)"
           }
-          className="max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-sm leading-relaxed text-slate-100 placeholder:text-slate-600 focus:outline-none"
+          className="max-h-[200px] min-h-[44px] w-full resize-none bg-transparent px-3 pt-2.5 pb-1 text-sm leading-relaxed text-slate-900 placeholder:text-slate-400 focus:outline-none"
           disabled={disabled || noModels || isRecording || isTranscribing}
         />
 
         {(isRecording || isTranscribing) && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none bg-black/10 rounded-2xl">
-            <div className="flex flex-col items-center gap-2 text-slate-50">
-              <span className="text-sm font-mono text-cyan-300">
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none rounded-2xl bg-white/70">
+            <div className="flex flex-col items-center gap-2 text-slate-900">
+              <span className="text-sm font-mono text-indigo-700">
                 {isRecording ? formatVoiceDuration(voice.seconds) : voice.detail ?? "Transcribing…"}
               </span>
               {isTranscribing && voice.model && (
-                <span className="text-[0.6rem] text-slate-300">{voice.model}</span>
+                <span className="text-[0.6rem] text-slate-500">{voice.model}</span>
               )}
             </div>
           </div>
@@ -117,7 +117,7 @@ export function Composer({
             className={cn(
               "h-8 w-8 rounded-lg",
               useTools && toolsSupported
-                ? "bg-cyan-400/10 text-cyan-300"
+                ? "bg-indigo-50 text-indigo-700"
                 : "text-slate-500",
             )}
             title={toolsSupported ? "Toggle tool use" : "This model does not support tools"}
@@ -130,7 +130,7 @@ export function Composer({
             variant="ghost"
             size="icon"
             onClick={onOpenSystemPrompt}
-            className={cn("h-8 w-8 rounded-lg", systemPromptActive ? "bg-violet-400/10 text-violet-300" : "text-slate-500")}
+            className={cn("h-8 w-8 rounded-lg", systemPromptActive ? "bg-violet-50 text-violet-700" : "text-slate-500")}
             title="System instruction"
           >
             <Settings2 className="h-3.5 w-3.5" />
@@ -151,7 +151,7 @@ export function Composer({
                 size="icon"
                 variant={voice.error ? "destructive" : "ghost"}
                 onClick={voice.start}
-                disabled={disabled || noModels || !value.trim()}
+                disabled={disabled || noModels}
                 title="Voice input"
                 aria-label="Start voice recording"
               >
@@ -202,7 +202,7 @@ export function Composer({
             )}
 
             {voice.error && (
-              <div className="flex items-center gap-1.5 rounded-lg bg-rose-400/10 border border-rose-400/20 px-2 py-1 text-[0.6rem] text-rose-200">
+              <div className="flex items-center gap-1.5 rounded-lg border border-rose-200 bg-rose-50 px-2 py-1 text-[0.6rem] text-rose-700">
                 <span>{voice.error}</span>
                 <Button type="button" size="icon" variant="ghost" className="h-6 w-6" onClick={voice.clearError} title="Dismiss">
                   <X className="h-3 w-3" />
@@ -214,14 +214,14 @@ export function Composer({
       </div>
 
       {noModels ? (
-        <div className="flex items-center justify-between rounded-xl border border-amber-400/20 bg-amber-400/[0.05] px-3 py-2">
-          <p className="text-[0.68rem] text-amber-200/80">No provider is configured yet.</p>
-          <Link href="/models" className="text-[0.68rem] font-medium text-amber-200 underline-offset-4 hover:underline">
+        <div className="flex items-center justify-between rounded-xl border border-amber-200 bg-amber-50 px-3 py-2">
+          <p className="text-[0.68rem] text-amber-800">No provider is configured yet.</p>
+          <Link href="/settings" className="text-[0.68rem] font-medium text-amber-800 underline-offset-4 hover:underline">
             Configure models →
           </Link>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-[0.58rem] text-slate-600">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1 text-[0.58rem] text-slate-500">
           <span>
             {useTools && toolsSupported ? "Tools armed — sensitive calls require approval." : "Tools disabled for this message."}
           </span>

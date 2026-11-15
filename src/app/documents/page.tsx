@@ -77,15 +77,29 @@ async function fetchDocuments(): Promise<Document[]> {
     const response = await fetch("/api/files", { cache: "no-store" });
     if (!response.ok) return [];
     const data = await response.json();
-    return data.files || [];
+    return data.files || data.documents || [];
   } catch {
     return [];
   }
 }
 
+function fileUrl(id: string, download = false): string {
+  return `/api/files?path=${encodeURIComponent(id)}${download ? "&download=1" : ""}`;
+}
+
+async function fetchDocumentContent(id: string): Promise<string | undefined> {
+  try {
+    const response = await fetch(fileUrl(id), { cache: "no-store" });
+    if (!response.ok) return undefined;
+    return await response.text();
+  } catch {
+    return undefined;
+  }
+}
+
 async function deleteDocument(id: string): Promise<boolean> {
   try {
-    const response = await fetch(`/api/files/${id}`, { method: "DELETE" });
+    const response = await fetch(fileUrl(id), { method: "DELETE" });
     return response.ok;
   } catch {
     return false;
@@ -136,7 +150,7 @@ function DocumentRow({
             <DropdownMenuItem onClick={() => onOpen(document.id)} className="flex items-center gap-2">
               <FolderOpen className="h-3.5 w-3.5" /> Open
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => window.open(`/api/files/${document.id}`, "_blank")} className="flex items-center gap-2">
+            <DropdownMenuItem onClick={() => window.open(fileUrl(document.id, true), "_blank")} className="flex items-center gap-2">
               <Download className="h-3.5 w-3.5" /> Download
             </DropdownMenuItem>
             {document.conversationId ? (
@@ -197,15 +211,23 @@ function DocumentViewer({
           </DialogDescription>
         </DialogHeader>
         <div className="overflow-y-auto max-h-[50vh] p-4 bg-slate-50 rounded-xl border border-slate-200">
-          <pre className="whitespace-pre-wrap text-sm text-slate-700 font-mono leading-relaxed">
-            {document.content || "Loading content..."}
-          </pre>
+          {document.type === "pdf" ? (
+            <iframe
+              title={document.name}
+              src={fileUrl(document.id)}
+              className="h-[46vh] w-full rounded-lg border border-slate-200 bg-white"
+            />
+          ) : (
+            <pre className="whitespace-pre-wrap text-sm text-slate-700 font-mono leading-relaxed">
+              {document.content || "Loading content..."}
+            </pre>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
             <X className="h-4 w-4 mr-1" /> Close
           </Button>
-          <Button onClick={() => window.open(`/api/files/${document.id}`, "_blank")}>
+          <Button onClick={() => window.open(fileUrl(document.id, true), "_blank")}>
             <Download className="h-4 w-4 mr-1" /> Download
           </Button>
         </DialogFooter>
@@ -328,7 +350,19 @@ export default function DocumentsPage() {
                     onDelete={(id) => setDeleteConfirm(id)}
                     onOpen={(id) => {
                       const doc = documents.find((d) => d.id === id);
-                      if (doc) setSelectedDoc(doc);
+                      if (!doc) return;
+                      if (doc.type === "pdf") {
+                        setSelectedDoc(doc);
+                        return;
+                      }
+                      setSelectedDoc({ ...doc, content: "Loading content..." });
+                      void fetchDocumentContent(doc.id).then((content) => {
+                        setSelectedDoc((current) =>
+                          current && current.id === doc.id
+                            ? { ...current, content: content ?? "Unable to load this document." }
+                            : current,
+                        );
+                      });
                     }}
                   />
                 ))}

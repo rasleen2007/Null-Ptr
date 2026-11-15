@@ -26,7 +26,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
-  delete process.env.JARVIS_ACCESS_TOKEN;
+  delete process.env.SAATHI_ACCESS_TOKEN;
 });
 
 describe("request body validation", () => {
@@ -110,7 +110,7 @@ describe("log redaction", () => {
 
   it("scrubs vault secret values from log messages and string values", async () => {
     const vaultDir = await mkdtemp(path.join(os.tmpdir(), "log-vault-"));
-    process.env.JARVIS_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
+    process.env.SAATHI_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
     resetVaultForTests();
     await unlockVault("test-passphrase");
     await rememberValue("aadhaar", "999941057058");
@@ -120,7 +120,7 @@ describe("log redaction", () => {
     expect(scrubbed).toContain("{{AADHAAR_1}}");
 
     resetVaultForTests();
-    delete process.env.JARVIS_VAULT_FILE;
+    delete process.env.SAATHI_VAULT_FILE;
     await rm(vaultDir, { recursive: true, force: true });
   });
 });
@@ -128,7 +128,7 @@ describe("log redaction", () => {
 describe("memory PII protection", () => {
   it("redacts PII to placeholders when saving memory with unlocked vault", async () => {
     const vaultDir = await mkdtemp(path.join(os.tmpdir(), "mem-vault-"));
-    process.env.JARVIS_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
+    process.env.SAATHI_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
     resetVaultForTests();
     await unlockVault("test-passphrase");
 
@@ -155,13 +155,13 @@ describe("memory PII protection", () => {
     expect(savedContent).toContain("{{AADHAAR_1}}");
 
     resetVaultForTests();
-    delete process.env.JARVIS_VAULT_FILE;
+    delete process.env.SAATHI_VAULT_FILE;
     await rm(vaultDir, { recursive: true, force: true });
   });
 
   it("rejects saving memory containing PII when vault is locked", async () => {
     const vaultDir = await mkdtemp(path.join(os.tmpdir(), "mem-vault-locked-"));
-    process.env.JARVIS_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
+    process.env.SAATHI_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
     resetVaultForTests();
 
     const mockStore = {
@@ -184,7 +184,7 @@ describe("memory PII protection", () => {
     expect(res.content).toContain("locked");
 
     resetVaultForTests();
-    delete process.env.JARVIS_VAULT_FILE;
+    delete process.env.SAATHI_VAULT_FILE;
     await rm(vaultDir, { recursive: true, force: true });
   });
 });
@@ -215,17 +215,17 @@ describe("access token verification", () => {
   });
 
   it("requires an exact configured token", async () => {
-    process.env.JARVIS_ACCESS_TOKEN = "correct-horse-battery-staple";
+    process.env.SAATHI_ACCESS_TOKEN = "correct-horse-battery-staple";
     expect(isAccessTokenRequired()).toBe(true);
     await expect(verifyAccessToken("correct-horse-battery-staple")).resolves.toBe(true);
     await expect(verifyAccessToken("wrong-token")).resolves.toBe(false);
     await expect(verifyAccessToken(undefined)).resolves.toBe(false);
   });
 
-  it("reads bearer and x-jarvis-token headers", () => {
+  it("reads bearer and x-saathi-token headers", () => {
     expect(accessTokenFromHeaders(new Headers({ Authorization: "Bearer abc" }))).toBe("abc");
     expect(accessTokenFromHeaders(new Headers({ Authorization: "bearer abc" }))).toBe("abc");
-    expect(accessTokenFromHeaders(new Headers({ "x-jarvis-token": "xyz" }))).toBe("xyz");
+    expect(accessTokenFromHeaders(new Headers({ "x-saathi-token": "xyz" }))).toBe("xyz");
     expect(accessTokenFromHeaders(new Headers({ Authorization: "Basic abc" }))).toBeUndefined();
   });
 });

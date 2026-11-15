@@ -54,8 +54,8 @@ export function DocumentCard({ type, title, path, preview, bytes, language, onDi
             className={cn(
               "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",
               type === "rti"
-                ? "bg-blue-500/10 text-blue-400"
-                : "bg-violet-500/10 text-violet-400",
+                ? "bg-blue-50 text-blue-600"
+                : "bg-violet-50 text-violet-600",
             )}
           >
             {type === "rti" ? <FileText className="h-5 w-5" /> : <FileType className="h-5 w-5" />}
@@ -64,12 +64,12 @@ export function DocumentCard({ type, title, path, preview, bytes, language, onDi
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-slate-100">{title}</p>
+                <p className="truncate text-sm font-medium text-slate-900">{title}</p>
                 <div className="mt-0.5 flex items-center gap-2 text-[0.58rem] text-slate-500">
                   <span className="font-mono truncate">{path}</span>
                   {bytes && <span>{formatBytes(bytes)}</span>}
                   {language && (
-                    <span className="inline-flex items-center gap-1 rounded border border-white/[0.08] bg-white/[0.03] px-1.5 py-0.5 font-mono">
+                    <span className="inline-flex items-center gap-1 rounded border border-slate-200 bg-slate-50 px-1.5 py-0.5 font-mono">
                       {language}
                     </span>
                   )}
@@ -104,7 +104,7 @@ export function DocumentCard({ type, title, path, preview, bytes, language, onDi
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7 text-slate-500 hover:text-rose-300"
+                    className="h-7 w-7 text-slate-500 hover:text-rose-600"
                     onClick={onDismiss}
                     title="Dismiss"
                     aria-label="Dismiss"
@@ -117,7 +117,7 @@ export function DocumentCard({ type, title, path, preview, bytes, language, onDi
 
             {preview && (
               <div className={cn("mt-2 transition-all", expanded ? "max-h-64" : "max-h-20")}>
-                <div className="rounded border border-white/[0.06] bg-white/[0.02] p-2 font-mono text-[0.6rem] text-slate-300 whitespace-pre-wrap overflow-auto">
+                <div className="overflow-auto whitespace-pre-wrap rounded border border-slate-200 bg-slate-50 p-2 font-mono text-[0.6rem] text-slate-700">
                   {expanded ? preview : `${preview.slice(0, 300)}${preview.length > 300 ? "…" : ""}`}
                 </div>
                 {preview.length > 300 && (

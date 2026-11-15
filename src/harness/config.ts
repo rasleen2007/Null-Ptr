@@ -1,5 +1,6 @@
 import type { AppSettings } from "./types";
 import { DEFAULT_MODEL_ID } from "./providers/catalog";
+import { envValue } from "../lib/env";
 
 export const DEFAULT_SYSTEM_PROMPT = `You are JARVIS, a precise and capable personal AI assistant running inside a modular harness built by your user.
 
@@ -46,26 +47,35 @@ export function getServerConfig(): ServerConfig {
     groqApiKey: env.GROQ_API_KEY?.trim() || undefined,
     openRouterApiKey: env.OPENROUTER_API_KEY?.trim() || undefined,
     openRouterSiteUrl: env.OPENROUTER_SITE_URL?.trim() || "http://localhost:3000",
-    openRouterAppName: env.OPENROUTER_APP_NAME?.trim() || "JARVIS AI Harness",
+    openRouterAppName: env.OPENROUTER_APP_NAME?.trim() || "Sarkari Saathi",
     ollamaBaseUrl: (env.OLLAMA_BASE_URL?.trim() || "http://localhost:11434").replace(/\/+$/, ""),
     localModel:
-      env.SARKARI_LOCAL_MODEL?.trim() ||
-      env.JARVIS_LOCAL_MODEL?.trim() ||
+      envValue("SARKARI_LOCAL_MODEL", "SAATHI_LOCAL_MODEL", "JARVIS_LOCAL_MODEL") ||
       "ollama:llama3.2",
     supabaseUrl: env.SUPABASE_URL?.trim() || undefined,
     supabaseServiceRoleKey: env.SUPABASE_SERVICE_ROLE_KEY?.trim() || undefined,
-    defaultModel: env.JARVIS_DEFAULT_MODEL?.trim() || DEFAULT_MODEL_ID,
-    maxIterations: Math.min(20, num(env.JARVIS_MAX_ITERATIONS, 6)),
-    providerTimeoutMs: Math.min(180000, num(env.JARVIS_PROVIDER_TIMEOUT_MS, 60000)),
-    toolTimeoutMs: Math.min(120000, num(env.JARVIS_TOOL_TIMEOUT_MS, 15000)),
-    contextTokenBudget: Math.min(200000, num(env.JARVIS_CONTEXT_TOKEN_BUDGET, 12000)),
-    memoryLimit: Math.min(20, num(env.JARVIS_MEMORY_LIMIT, 5)),
-    workspaceDir: env.JARVIS_WORKSPACE_DIR?.trim() || ".workspace",
-    shellAllowlist: (env.JARVIS_SHELL_ALLOWLIST?.trim() || "git,node")
+    defaultModel: envValue("SAATHI_DEFAULT_MODEL", "JARVIS_DEFAULT_MODEL") || DEFAULT_MODEL_ID,
+    maxIterations: Math.min(20, num(envValue("SAATHI_MAX_ITERATIONS", "JARVIS_MAX_ITERATIONS"), 6)),
+    providerTimeoutMs: Math.min(
+      180000,
+      num(envValue("SAATHI_PROVIDER_TIMEOUT_MS", "JARVIS_PROVIDER_TIMEOUT_MS"), 60000),
+    ),
+    toolTimeoutMs: Math.min(
+      120000,
+      num(envValue("SAATHI_TOOL_TIMEOUT_MS", "JARVIS_TOOL_TIMEOUT_MS"), 15000),
+    ),
+    contextTokenBudget: Math.min(
+      200000,
+      num(envValue("SAATHI_CONTEXT_TOKEN_BUDGET", "JARVIS_CONTEXT_TOKEN_BUDGET"), 12000),
+    ),
+    memoryLimit: Math.min(20, num(envValue("SAATHI_MEMORY_LIMIT", "JARVIS_MEMORY_LIMIT"), 5)),
+    workspaceDir: envValue("SAATHI_WORKSPACE_DIR", "JARVIS_WORKSPACE_DIR") || ".workspace",
+    shellAllowlist: (envValue("SAATHI_SHELL_ALLOWLIST", "JARVIS_SHELL_ALLOWLIST") || "git,node")
       .split(",")
       .map((s) => s.trim())
       .filter(Boolean),
-    enableShell: (env.JARVIS_ENABLE_SHELL?.trim() || "false").toLowerCase() === "true",
+    enableShell:
+      (envValue("SAATHI_ENABLE_SHELL", "JARVIS_ENABLE_SHELL") || "false").toLowerCase() === "true",
   };
 }
 

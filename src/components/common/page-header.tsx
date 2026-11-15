@@ -30,16 +30,16 @@ export function PageHeader({
         {eyebrow ? <p className="eyebrow mb-2">{eyebrow}</p> : null}
         <div className="flex items-center gap-3">
           {Icon ? (
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-cyan-400/20 bg-cyan-400/[0.07] text-cyan-300">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 text-indigo-600">
               <Icon className="h-5 w-5" />
             </span>
           ) : null}
-          <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-50 sm:text-[1.75rem]">
+          <h1 className="truncate text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
             {title}
           </h1>
         </div>
         {description ? (
-          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-400">{description}</p>
+          <p className="mt-2 max-w-2xl text-sm leading-relaxed text-slate-500">{description}</p>
         ) : null}
       </div>
       {actions ? <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div> : null}

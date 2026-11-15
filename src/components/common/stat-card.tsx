@@ -9,22 +9,23 @@ export function StatCard({
   value,
   hint,
   icon: Icon,
-  accent = "cyan",
+  accent = "indigo",
   delay = 0,
 }: {
   label: string;
   value: React.ReactNode;
   hint?: string;
   icon: LucideIcon;
-  accent?: "cyan" | "blue" | "violet" | "emerald" | "amber";
+  accent?: "indigo" | "cyan" | "blue" | "violet" | "emerald" | "amber";
   delay?: number;
 }) {
   const accents: Record<string, string> = {
-    cyan: "border-cyan-400/20 bg-cyan-400/[0.07] text-cyan-300",
-    blue: "border-blue-400/20 bg-blue-400/[0.07] text-blue-300",
-    violet: "border-violet-400/20 bg-violet-400/[0.07] text-violet-300",
-    emerald: "border-emerald-400/20 bg-emerald-400/[0.07] text-emerald-300",
-    amber: "border-amber-400/20 bg-amber-400/[0.07] text-amber-300",
+    indigo: "border-indigo-200 bg-indigo-50 text-indigo-600",
+    cyan: "border-indigo-200 bg-indigo-50 text-indigo-600",
+    blue: "border-blue-200 bg-blue-50 text-blue-600",
+    violet: "border-violet-200 bg-violet-50 text-violet-600",
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-600",
+    amber: "border-amber-200 bg-amber-50 text-amber-600",
   };
   return (
     <motion.div
@@ -36,14 +37,14 @@ export function StatCard({
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="panel-label">{label}</p>
-          <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-50">{value}</p>
+          <p className="mt-3 text-2xl font-semibold tracking-tight text-slate-900">{value}</p>
           {hint ? <p className="mt-1.5 text-xs text-slate-500">{hint}</p> : null}
         </div>
         <span className={cn("flex h-9 w-9 items-center justify-center rounded-lg border", accents[accent])}>
           <Icon className="h-4 w-4" />
         </span>
       </div>
-      <div className="pointer-events-none absolute -bottom-10 -right-8 h-24 w-24 rounded-full bg-cyan-400/[0.06] blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-10 -right-8 h-24 w-24 rounded-full bg-indigo-400/[0.08] blur-2xl" />
     </motion.div>
   );
 }

@@ -33,13 +33,13 @@ let vaultDir: string;
 beforeEach(async () => {
   fake = await startFakeOllama();
   vaultDir = await mkdtemp(path.join(os.tmpdir(), "privacy-integration-"));
-  process.env.JARVIS_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
+  process.env.SAATHI_VAULT_FILE = path.join(vaultDir, "vault.enc.json");
   resetVaultForTests();
 });
 
 afterEach(async () => {
   resetVaultForTests();
-  delete process.env.JARVIS_VAULT_FILE;
+  delete process.env.SAATHI_VAULT_FILE;
   await rm(vaultDir, { recursive: true, force: true });
   await ctx?.cleanup();
   ctx = undefined;

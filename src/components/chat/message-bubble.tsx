@@ -7,18 +7,18 @@ import { cn, formatTime } from "@/lib/utils";
 import { Markdown } from "./markdown";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useSpeech, type SpeechController } from "@/lib/use-speech";
+import { useSpeech } from "@/lib/use-speech";
 import { speechLangFor } from "@/lib/speech";
 
 function MiniCore({ active = false }: { active?: boolean }) {
   return (
     <span
       className={cn(
-        "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-cyan-300/25 bg-slate-950/70",
-        active && "shadow-[0_0_20px_-4px_rgba(34,211,238,0.7)]",
+        "relative flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-indigo-200 bg-indigo-50",
+        active && "shadow-[0_0_20px_-4px_rgba(79,70,229,0.5)]",
       )}
     >
-      <span className="h-3.5 w-3.5 rounded-full bg-[radial-gradient(circle_at_35%_30%,#e0fbff,#22d3ee_45%,#0369a1_90%)] shadow-[0_0_10px_2px_rgba(34,211,238,0.5)]" />
+      <span className="h-3.5 w-3.5 rounded-full bg-[radial-gradient(circle_at_35%_30%,#eef2ff,#6366f1_45%,#3730a3_90%)] shadow-[0_0_10px_2px_rgba(79,70,229,0.35)]" />
     </span>
   );
 }
@@ -35,27 +35,21 @@ export function MessageBubble({
   modelLabel?: string;
 }) {
   const [copied, setCopied] = useState(false);
-  const [speechState, setSpeechState] = useState<{ speaking: boolean; controller: SpeechController | null }>({
-    speaking: false,
-    controller: null,
-  });
 
   const speech = useSpeech();
-  const speechRef = useRef<SpeechController | null>(null);
-  const activeSpeechRef = useRef<{ id: string; stop: () => void } | null>(null);
+  const activeSpeechRef = useRef<string | null>(null);
 
   useEffect(() => {
-    speechRef.current = speech;
-    setSpeechState({ speaking: false, controller: speech });
     return () => {
-      speechRef.current?.stop();
+      speech.stop();
     };
-  }, [speech]);
+  }, [speech.stop]);
 
   if (message.role === "tool" || message.role === "system") return null;
 
   const isUser = message.role === "user";
   const toolCalls = message.toolCalls ?? [];
+  const isSpeaking = speech.speaking && activeSpeechRef.current === message.id;
 
   async function copy() {
     try {
@@ -68,47 +62,41 @@ export function MessageBubble({
   }
 
   const handleSpeak = () => {
-    if (!speechRef.current?.supported) return;
+    if (!speech.supported) return;
 
     const cleanText = message.content.trim();
     if (!cleanText) return;
 
-    if (activeSpeechRef.current && activeSpeechRef.current.id !== message.id) {
-      activeSpeechRef.current.stop();
+    if (activeSpeechRef.current && activeSpeechRef.current !== message.id) {
+      speech.stop();
     }
 
-    if (speechState.speaking && activeSpeechRef.current?.id === message.id) {
-      speechRef.current?.stop();
+    if (isSpeaking) {
+      speech.stop();
       activeSpeechRef.current = null;
-      setSpeechState({ ...speechState, speaking: false });
       return;
     }
 
-    speechRef.current!.speak(cleanText);
-    activeSpeechRef.current = {
-      id: message.id,
-      stop: () => speechRef.current?.stop(),
-    };
-    setSpeechState({ ...speechState, speaking: true });
+    activeSpeechRef.current = message.id;
+    speech.speak(cleanText);
   };
 
   const handleStop = (event: React.MouseEvent) => {
     event.stopPropagation();
-    speechRef.current?.stop();
+    speech.stop();
     activeSpeechRef.current = null;
-    setSpeechState({ ...speechState, speaking: false });
   };
 
   if (isUser) {
     return (
       <div className="flex justify-end">
         <div className="group max-w-[85%] sm:max-w-[75%]">
-          <div className="relative overflow-hidden rounded-2xl rounded-tr-md border border-cyan-400/20 bg-gradient-to-br from-cyan-400/[0.12] to-blue-500/[0.06] px-4 py-3">
-            <p className="whitespace-pre-wrap text-sm leading-relaxed text-cyan-50/95">{message.content}</p>
+          <div className="relative overflow-hidden rounded-2xl rounded-tr-md border border-indigo-200 bg-indigo-50 px-4 py-3">
+            <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">{message.content}</p>
           </div>
           <div className="mt-1 flex items-center justify-end gap-2 pr-1">
-            <span className="text-[0.58rem] text-slate-600">{formatTime(message.createdAt)}</span>
-            <span className="inline-flex items-center gap-1 text-[0.58rem] uppercase tracking-[0.14em] text-slate-600">
+            <span className="text-[0.58rem] text-slate-400">{formatTime(message.createdAt)}</span>
+            <span className="inline-flex items-center gap-1 text-[0.58rem] uppercase tracking-[0.14em] text-slate-400">
               <MessageSquare className="h-2.5 w-2.5" /> You
             </span>
           </div>
@@ -124,7 +112,7 @@ export function MessageBubble({
       <MiniCore active={streaming} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-cyan-200/90">Jarvis</span>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600/90">Sarkari</span>
           {modelLabel ? (
             <Badge variant="secondary" className="px-2 py-0 text-[0.55rem]">
               {modelLabel}
@@ -135,7 +123,7 @@ export function MessageBubble({
               <Wrench className="h-2.5 w-2.5" /> {toolCalls.length} tool call{toolCalls.length === 1 ? "" : "s"}
             </Badge>
           ) : null}
-          <span className="text-[0.58rem] text-slate-600">{formatTime(message.createdAt)}</span>
+          <span className="text-[0.58rem] text-slate-400">{formatTime(message.createdAt)}</span>
           {message.content ? (
             <div className="ml-auto flex items-center gap-1.5">
               <Button
@@ -143,29 +131,29 @@ export function MessageBubble({
                 size="icon"
                 variant="ghost"
                 onClick={handleSpeak}
-                disabled={!speechState.controller?.supported}
+                disabled={!speech.supported}
                 className={cn(
                   "h-8 w-8 rounded-lg transition-colors",
-                  speechState.speaking && activeSpeechRef.current?.id === message.id
-                    ? "bg-cyan-400/10 text-cyan-300"
-                    : "text-slate-500 hover:text-cyan-300",
+                  isSpeaking
+                    ? "bg-indigo-50 text-indigo-700"
+                    : "text-slate-500 hover:text-indigo-700",
                 )}
-                title={speechState.speaking && activeSpeechRef.current?.id === message.id ? "Stop speech" : "Read aloud"}
-                aria-label={speechState.speaking && activeSpeechRef.current?.id === message.id ? "Stop speech" : "Read aloud"}
+                title={isSpeaking ? "Stop speech" : "Read aloud"}
+                aria-label={isSpeaking ? "Stop speech" : "Read aloud"}
               >
-                {speechState.speaking && activeSpeechRef.current?.id === message.id ? (
+                {isSpeaking ? (
                   <VolumeX className="h-4 w-4" />
                 ) : (
                   <Volume2 className="h-4 w-4" />
                 )}
               </Button>
-              {speechState.speaking && activeSpeechRef.current?.id === message.id && (
+              {isSpeaking && (
                 <Button
                   type="button"
                   size="icon"
                   variant="ghost"
                   onClick={handleStop}
-                  className="h-8 w-8 rounded-lg text-amber-300 hover:text-amber-200"
+                  className="h-8 w-8 rounded-lg text-amber-600 hover:text-amber-700"
                   title="Stop speech"
                   aria-label="Stop speech"
                 >
@@ -175,7 +163,7 @@ export function MessageBubble({
               <button
                 type="button"
                 onClick={copy}
-                className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.58rem] text-slate-600 opacity-0 transition-opacity hover:text-cyan-200 group-hover:opacity-100"
+                className="flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[0.58rem] text-slate-400 opacity-0 transition-opacity hover:text-indigo-600 group-hover:opacity-100"
                 aria-label="Copy message"
               >
                 {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
@@ -188,10 +176,10 @@ export function MessageBubble({
         {message.content ? (
           <div className="mt-1.5">
             <Markdown content={message.content} />
-            {showCursor ? <span className="ml-0.5 inline-block h-4 w-1.5 animate-blink bg-cyan-300 align-middle" /> : null}
+            {showCursor ? <span className="ml-0.5 inline-block h-4 w-1.5 animate-blink bg-indigo-500 align-middle" /> : null}
             {!streaming && message.content && (
               <div className="mt-2 flex items-center gap-1.5 text-[0.55rem] text-slate-500">
-                <span className="inline-flex items-center gap-1 rounded-full border border-white/[0.08] bg-white/[0.03] px-2 py-0.5 font-mono">
+                <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 font-mono">
                   {lang === "hi-IN" ? (
                     <>
                       <span className="h-2 w-2 rounded-full bg-orange-400" />
@@ -212,14 +200,14 @@ export function MessageBubble({
             {toolCalls.map((call) => (
               <span
                 key={call.id}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/15 bg-amber-400/[0.04] px-2 py-1 font-mono text-[0.62rem] text-amber-200/80"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 font-mono text-[0.62rem] text-amber-800"
               >
                 <Wrench className="h-2.5 w-2.5" /> {call.name}
               </span>
             ))}
           </div>
         ) : (
-          <p className="mt-2 text-xs italic text-slate-600">No text response.</p>
+          <p className="mt-2 text-xs italic text-slate-400">No text response.</p>
         )}
       </div>
     </div>

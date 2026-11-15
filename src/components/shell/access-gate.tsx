@@ -68,7 +68,7 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
     const valid = await verifyToken(candidate);
     setSubmitting(false);
     if (!valid) {
-      setError("That token was rejected. Check JARVIS_ACCESS_TOKEN on the server.");
+      setError("That token was rejected. Check SAATHI_ACCESS_TOKEN (or JARVIS_ACCESS_TOKEN) on the server.");
       return;
     }
     storeAccessToken(candidate);
@@ -79,41 +79,41 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen items-center justify-center px-6">
-      <div className="w-full max-w-md rounded-2xl border border-cyan-400/15 bg-slate-950/70 p-8 shadow-[0_0_80px_-30px_rgba(34,211,238,0.5)] backdrop-blur-2xl">
+      <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
         <div className="mb-6 flex items-center gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-cyan-300/25 bg-cyan-400/10">
-            <ShieldCheck className="h-5 w-5 text-cyan-300" />
+          <span className="flex h-11 w-11 items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50">
+            <ShieldCheck className="h-5 w-5 text-indigo-600" />
           </span>
           <div>
-            <p className="text-sm font-semibold tracking-[0.22em] text-slate-100">JARVIS</p>
+            <p className="text-sm font-semibold tracking-[0.22em] text-slate-900">SARKARI SAATHI</p>
             <p className="text-xs text-slate-500">Secure access link</p>
           </div>
         </div>
 
         {state === "checking" ? (
-          <div className="flex items-center gap-3 text-sm text-slate-300">
-            <Loader2 className="h-4 w-4 animate-spin text-cyan-300" />
+          <div className="flex items-center gap-3 text-sm text-slate-600">
+            <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
             Initializing secure link...
           </div>
         ) : state === "error" ? (
           <div className="space-y-4">
-            <p className="text-sm text-rose-300">{error}</p>
+            <p className="text-sm text-rose-600">{error}</p>
             <Button variant="outline" onClick={() => window.location.reload()}>
               Retry connection
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
-            <p className="text-sm leading-relaxed text-slate-400">
+            <p className="text-sm leading-relaxed text-slate-600">
               This harness is protected by an access token. Enter the value configured in{" "}
-              <code className="rounded bg-white/5 px-1 py-0.5 text-cyan-200">JARVIS_ACCESS_TOKEN</code>.
+              <code className="rounded bg-slate-100 px-1 py-0.5 text-indigo-700">SAATHI_ACCESS_TOKEN</code>.
             </p>
             <div className="space-y-2">
-              <label htmlFor="jarvis-access-token" className="text-xs uppercase tracking-[0.18em] text-slate-500">
+              <label htmlFor="saathi-access-token" className="text-xs uppercase tracking-[0.18em] text-slate-500">
                 Access token
               </label>
               <Input
-                id="jarvis-access-token"
+                id="saathi-access-token"
                 type="password"
                 autoComplete="current-password"
                 value={token}
@@ -124,14 +124,14 @@ export function AccessGate({ children }: { children: React.ReactNode }) {
                 placeholder="Bearer token"
               />
             </div>
-            {error ? <p className="text-xs text-rose-300">{error}</p> : null}
+            {error ? <p className="text-xs text-rose-600">{error}</p> : null}
             <Button className="w-full" onClick={() => void submit()} disabled={submitting}>
               {submitting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <KeyRound className="h-4 w-4" />
               )}
-              Unlock JARVIS
+              Unlock Saathi
             </Button>
           </div>
         )}

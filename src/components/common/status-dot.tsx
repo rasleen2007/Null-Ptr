@@ -13,7 +13,7 @@ export function StatusDot({
     online: "bg-emerald-400 shadow-[0_0_10px_2px_rgba(52,211,153,0.45)]",
     warning: "bg-amber-400 shadow-[0_0_10px_2px_rgba(251,191,36,0.45)]",
     offline: "bg-slate-500",
-    busy: "bg-cyan-300 shadow-[0_0_10px_2px_rgba(34,211,238,0.55)]",
+    busy: "bg-indigo-500 shadow-[0_0_10px_2px_rgba(79,70,229,0.45)]",
   };
   return (
     <span className={cn("relative inline-flex h-1.5 w-1.5 shrink-0 rounded-full", tones[tone], className)}>

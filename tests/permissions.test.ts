@@ -56,7 +56,7 @@ describe("getToolAvailability", () => {
       getToolAvailability({ name: "shell_command", category: "system" }, enabledSettings, {
         enableShell: false,
       }).reason,
-    ).toMatch(/JARVIS_ENABLE_SHELL/);
+    ).toMatch(/SAATHI_ENABLE_SHELL/);
     expect(
       getToolAvailability({ name: "shell_command", category: "system" }, enabledSettings, {
         enableShell: true,

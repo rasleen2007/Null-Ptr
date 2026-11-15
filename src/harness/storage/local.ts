@@ -10,6 +10,7 @@ import type {
 } from "../types";
 import { createDefaultSettings } from "../config";
 import { createId } from "../utils";
+import { envValue } from "../../lib/env";
 import type {
   AddLogInput,
   AddMessageInput,
@@ -59,8 +60,8 @@ function makeMutex() {
 export function createLocalStorage(options: { dataFile?: string } = {}): Storage {
   const dataFile =
     options.dataFile ??
-    process.env.JARVIS_DATA_FILE ??
-    path.join(process.cwd(), ".data", "jarvis.json");
+    envValue("SAATHI_DATA_FILE", "JARVIS_DATA_FILE") ??
+    path.join(process.cwd(), ".data", "saathi.json");
   const mutex = makeMutex();
   let cache: LocalDatabase | null = null;
 
@@ -319,6 +320,17 @@ export function createLocalStorage(options: { dataFile?: string } = {}): Storage
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
           .slice(0, Math.max(1, limit)),
       ),
+
+    deleteRun: (id) =>
+      write((db) => {
+        db.runs = db.runs.filter((r) => r.id !== id);
+        db.logs = db.logs.filter((l) => l.runId !== id);
+      }),
+
+    clearRuns: () =>
+      write((db) => {
+        db.runs = [];
+      }),
 
     getSettings: () => read((db) => db.settings),
 

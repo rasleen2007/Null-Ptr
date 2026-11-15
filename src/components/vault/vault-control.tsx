@@ -104,7 +104,7 @@ export function VaultControl({
         size="sm"
         className={cn(
           "h-8 gap-1.5 rounded-lg px-2 text-[0.62rem]",
-          unlocked ? "text-emerald-300/90 hover:text-emerald-200" : "text-slate-400",
+          unlocked ? "text-emerald-700 hover:text-emerald-800" : "text-slate-500",
           className,
         )}
         onClick={() => {
@@ -136,9 +136,9 @@ export function VaultControl({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {unlocked ? (
-                <Unlock className="h-4 w-4 text-emerald-300" />
+                <Unlock className="h-4 w-4 text-emerald-600" />
               ) : (
-                <KeyRound className="h-4 w-4 text-cyan-300" />
+                <KeyRound className="h-4 w-4 text-indigo-600" />
               )}
               {unlocked ? "Vault unlocked" : status?.exists ? "Unlock vault" : "Create vault"}
             </DialogTitle>
@@ -153,11 +153,11 @@ export function VaultControl({
 
           {unlocked ? (
             <div className="space-y-3">
-              <div className="flex items-center justify-between rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
-                <span className="inline-flex items-center gap-2 text-[0.7rem] text-slate-400">
-                  <Database className="h-3.5 w-3.5 text-cyan-300/80" /> Protected fields
+              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+                <span className="inline-flex items-center gap-2 text-[0.7rem] text-slate-500">
+                  <Database className="h-3.5 w-3.5 text-indigo-600" /> Protected fields
                 </span>
-                <span className="font-mono text-xs text-slate-200">
+                <span className="font-mono text-xs text-slate-800">
                   {status?.fieldCount ?? 0}
                 </span>
               </div>
@@ -184,7 +184,7 @@ export function VaultControl({
                 />
               </div>
               {error ? (
-                <p className="rounded-lg border border-rose-400/25 bg-rose-400/[0.06] px-3 py-2 text-[0.68rem] text-rose-200/90">
+                <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-[0.68rem] text-rose-700">
                   {error}
                 </p>
               ) : null}
@@ -194,7 +194,7 @@ export function VaultControl({
 
           <DialogFooter>
             <Button asChild variant="ghost" className="mr-auto">
-              <Link href="/vault">
+              <Link href="/privacy">
                 Manage vault <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   AlertTriangle,
   ArrowRight,
@@ -10,7 +9,6 @@ import {
   Database,
   Download,
   Eye,
-  EyeOff,
   Loader2,
   RefreshCw,
   Shield,
@@ -19,11 +17,10 @@ import {
   User,
   X,
 } from "lucide-react";
-import { cn, formatDate, formatRelativeTime, formatFileSize } from "@/lib/utils";
+import { cn, formatDate, formatRelativeTime } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import {
   Dialog,
   DialogContent,
@@ -35,12 +32,10 @@ import {
 import { VaultControl } from "@/components/vault/vault-control";
 
 interface VaultStatus {
-  locked: boolean;
-  vaultPath: string;
-  masterKeyExists: boolean;
-  sizeBytes: number;
-  fileCount: number;
-  lastModified: string | null;
+  exists: boolean;
+  unlocked: boolean;
+  fieldCount: number;
+  updatedAt?: string;
 }
 
 interface RedactionLog {
@@ -79,7 +74,7 @@ const PII_TYPE_LABEL: Record<string, string> = {
 
 async function fetchVaultStatus(): Promise<VaultStatus | null> {
   try {
-    const response = await fetch("/api/vault/status", { cache: "no-store" });
+    const response = await fetch("/api/vault", { cache: "no-store" });
     if (!response.ok) return null;
     return await response.json();
   } catch {
@@ -89,20 +84,58 @@ async function fetchVaultStatus(): Promise<VaultStatus | null> {
 
 async function fetchRedactionLogs(): Promise<RedactionLog[]> {
   try {
-    const response = await fetch("/api/privacy/redactions", { cache: "no-store" });
+    const response = await fetch("/api/logs?limit=500", { cache: "no-store" });
     if (!response.ok) return [];
     const data = await response.json();
-    return data.logs || [];
+    const logs = Array.isArray(data.logs) ? data.logs : [];
+    return logs
+      .filter((log: { event?: string }) => log.event === "privacy_guard")
+      .map(
+        (log: {
+          id: string;
+          createdAt: string;
+          conversationId?: string;
+          message?: string;
+          data?: Record<string, unknown>;
+        }) => {
+          const placeholders = Array.isArray(log.data?.placeholders)
+            ? (log.data?.placeholders as string[])
+            : [];
+          const types = Array.isArray(log.data?.types) ? (log.data?.types as string[]) : [];
+          return {
+            id: log.id,
+            timestamp: log.createdAt,
+            conversationId: log.conversationId ?? "",
+            originalText: "Not stored — original message text is never written to logs.",
+            redactedText: log.message ?? "",
+            placeholders,
+            types,
+            route: log.data?.route === "ollama" ? "ollama" : "cloud",
+            verifiedClean: Boolean(log.data?.verifiedClean),
+          } satisfies RedactionLog;
+        },
+      );
   } catch {
     return [];
   }
 }
 
+function computePrivacyStats(logs: RedactionLog[]): PrivacyStats {
+  const conversations = new Set(logs.map((log) => log.conversationId).filter(Boolean));
+  const redacted = logs.filter((log) => log.placeholders.length > 0);
+  return {
+    totalRedactions: redacted.length,
+    totalConversations: conversations.size,
+    localOnlyTurns: logs.filter((log) => log.route === "ollama").length,
+    cloudTurns: logs.filter((log) => log.route === "cloud" && log.verifiedClean).length,
+    lastRedaction: logs[0]?.timestamp ?? null,
+  };
+}
+
 async function fetchPrivacyStats(): Promise<PrivacyStats | null> {
   try {
-    const response = await fetch("/api/privacy/stats", { cache: "no-store" });
-    if (!response.ok) return null;
-    return await response.json();
+    const logs = await fetchRedactionLogs();
+    return computePrivacyStats(logs);
   } catch {
     return null;
   }
@@ -110,10 +143,10 @@ async function fetchPrivacyStats(): Promise<PrivacyStats | null> {
 
 async function unlockVault(password: string): Promise<boolean> {
   try {
-    const response = await fetch("/api/vault/unlock", {
+    const response = await fetch("/api/vault", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ password }),
+      body: JSON.stringify({ action: "unlock", passphrase: password }),
     });
     return response.ok;
   } catch {
@@ -123,7 +156,11 @@ async function unlockVault(password: string): Promise<boolean> {
 
 async function lockVault(): Promise<boolean> {
   try {
-    const response = await fetch("/api/vault/lock", { method: "POST" });
+    const response = await fetch("/api/vault", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "lock" }),
+    });
     return response.ok;
   } catch {
     return false;
@@ -132,8 +169,37 @@ async function lockVault(): Promise<boolean> {
 
 async function clearRedactionLogs(): Promise<boolean> {
   try {
-    const response = await fetch("/api/privacy/redactions", { method: "DELETE" });
+    const response = await fetch("/api/logs", { method: "DELETE" });
     return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function deleteEverything(): Promise<boolean> {
+  try {
+    const conversations = await fetch("/api/conversations", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : { conversations: [] }))
+      .catch(() => ({ conversations: [] }));
+    await Promise.all(
+      (conversations.conversations ?? []).map((conversation: { id: string }) =>
+        fetch(`/api/conversations/${conversation.id}`, { method: "DELETE" }).catch(() => undefined),
+      ),
+    );
+
+    const memories = await fetch("/api/memory", { cache: "no-store" })
+      .then((response) => (response.ok ? response.json() : { memories: [] }))
+      .catch(() => ({ memories: [] }));
+    await Promise.all(
+      (memories.memories ?? []).map((memory: { id: string }) =>
+        fetch(`/api/memory/${memory.id}`, { method: "DELETE" }).catch(() => undefined),
+      ),
+    );
+
+    await fetch("/api/logs", { method: "DELETE" }).catch(() => undefined);
+    await fetch("/api/runs", { method: "DELETE" }).catch(() => undefined);
+    await fetch("/api/vault", { method: "DELETE" }).catch(() => undefined);
+    return true;
   } catch {
     return false;
   }
@@ -219,8 +285,7 @@ function PrivacyPrinciple({ icon: Icon, title, description, status }: { icon: Re
   );
 }
 
-function RedactionLogRow({ log }: { log: RedactionLog }) {
-  const [expanded, setExpanded] = useState(false);
+function RedactionLogRow({ log, onOpen }: { log: RedactionLog; onOpen: () => void }) {
 
   return (
     <tr className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
@@ -257,17 +322,17 @@ function RedactionLogRow({ log }: { log: RedactionLog }) {
         </Badge>
       </td>
       <td className="px-4 py-3 text-right">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setExpanded(!expanded)}>
-          {expanded ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onOpen}>
+          <Eye className="h-4 w-4" />
         </Button>
       </td>
     </tr>
   );
 }
 
-function RedactionLogDetail({ log }: { log: RedactionLog }) {
+function RedactionLogDetail({ log, onClose }: { log: RedactionLog; onClose: () => void }) {
   return (
-    <Dialog open={true} onOpenChange={() => {}}>
+    <Dialog open={true} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-3xl max-h-[80vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
@@ -307,7 +372,7 @@ function RedactionLogDetail({ log }: { log: RedactionLog }) {
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => {}}>
+          <Button variant="outline" onClick={onClose}>
             Close
           </Button>
         </DialogFooter>
@@ -321,8 +386,8 @@ export default function PrivacyPage() {
   const [redactionLogs, setRedactionLogs] = useState<RedactionLog[]>([]);
   const [privacyStats, setPrivacyStats] = useState<PrivacyStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [unlockPassword, setUnlockPassword] = useState("");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showDeleteAll, setShowDeleteAll] = useState(false);
   const [expandedLog, setExpandedLog] = useState<string | null>(null);
 
   useEffect(() => {
@@ -343,14 +408,13 @@ export default function PrivacyPage() {
 
   const handleUnlock = async (password: string) => {
     if (await unlockVault(password)) {
-      setVaultStatus((prev) => prev ? { ...prev, locked: false } : null);
+      setVaultStatus((prev) => (prev ? { ...prev, unlocked: true } : null));
     }
-    setUnlockPassword("");
   };
 
   const handleLock = async () => {
     if (await lockVault()) {
-      setVaultStatus((prev) => prev ? { ...prev, locked: true } : null);
+      setVaultStatus((prev) => (prev ? { ...prev, unlocked: false } : null));
     }
   };
 
@@ -360,6 +424,33 @@ export default function PrivacyPage() {
       setPrivacyStats((prev) => prev ? { ...prev, totalRedactions: 0, lastRedaction: null } : null);
     }
     setShowClearConfirm(false);
+  };
+
+  const handleDeleteEverything = async () => {
+    if (await deleteEverything()) {
+      setRedactionLogs([]);
+      setPrivacyStats(computePrivacyStats([]));
+      setVaultStatus({ exists: false, unlocked: false, fieldCount: 0 });
+    }
+    setShowDeleteAll(false);
+  };
+
+  const handleExport = () => {
+    const report = {
+      generatedAt: new Date().toISOString(),
+      vault: vaultStatus,
+      stats: privacyStats,
+      redactions: redactionLogs,
+    };
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `sarkari-saathi-privacy-report-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
   };
 
   if (loading) {
@@ -396,7 +487,7 @@ export default function PrivacyPage() {
           <div className="lg:col-span-2">
             {vaultStatus && (
               <StatusIndicator
-                locked={vaultStatus.locked}
+                locked={!vaultStatus.unlocked}
                 onUnlock={handleUnlock}
                 onLock={handleLock}
               />
@@ -419,26 +510,26 @@ export default function PrivacyPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Encrypted Files</span>
-                  <span className="font-mono font-semibold text-slate-900">{vaultStatus?.fileCount ?? 0}</span>
+                  <span className="text-sm text-slate-600">Protected Fields</span>
+                  <span className="font-mono font-semibold text-slate-900">{vaultStatus?.fieldCount ?? 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Total Size</span>
+                  <span className="text-sm text-slate-600">Vault File</span>
                   <span className="font-mono font-semibold text-slate-900">
-                    {vaultStatus ? (vaultStatus.sizeBytes / 1024).toFixed(1) + " KB" : "—"}
+                    {vaultStatus?.exists ? "Created" : "Not created"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-slate-600">Last Modified</span>
                   <span className="font-mono font-semibold text-slate-900">
-                    {vaultStatus?.lastModified ? formatDate(vaultStatus.lastModified) : "—"}
+                    {vaultStatus?.updatedAt ? formatDate(vaultStatus.updatedAt) : "—"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-slate-600">Master Key</span>
-                  <Badge variant={vaultStatus?.masterKeyExists ? "success" : "danger"} className="gap-1">
-                    {vaultStatus?.masterKeyExists ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-                    {vaultStatus?.masterKeyExists ? "Configured" : "Missing"}
+                  <span className="text-sm text-slate-600">Vault State</span>
+                  <Badge variant={vaultStatus?.unlocked ? "success" : "warning"} className="gap-1">
+                    {vaultStatus?.unlocked ? <CheckCircle2 className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+                    {vaultStatus?.unlocked ? "Unlocked" : "Locked"}
                   </Badge>
                 </div>
               </CardContent>
@@ -579,7 +670,7 @@ export default function PrivacyPage() {
                 </thead>
                 <tbody>
                   {redactionLogs.slice(0, 50).map((log) => (
-                    <RedactionLogRow key={log.id} log={log} />
+                    <RedactionLogRow key={log.id} log={log} onOpen={() => setExpandedLog(log.id)} />
                   ))}
                 </tbody>
               </table>
@@ -605,7 +696,7 @@ export default function PrivacyPage() {
               <CardDescription>Permanently delete vault, conversations, memories, and redaction logs</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="destructive" className="w-full gap-2">
+              <Button variant="destructive" className="w-full gap-2" onClick={() => setShowDeleteAll(true)}>
                 <Trash2 className="h-4 w-4" /> Delete Everything
               </Button>
             </CardContent>
@@ -616,7 +707,7 @@ export default function PrivacyPage() {
               <CardDescription>Download a JSON report of all redaction activity and vault status</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" className="w-full gap-2">
+              <Button variant="outline" className="w-full gap-2" onClick={handleExport}>
                 <Download className="h-4 w-4" /> Export Report
               </Button>
             </CardContent>
@@ -651,6 +742,53 @@ export default function PrivacyPage() {
           </div>
         </div>
       </footer>
+
+      {expandedLog ? (
+        <RedactionLogDetail
+          log={redactionLogs.find((log) => log.id === expandedLog) ?? redactionLogs[0]}
+          onClose={() => setExpandedLog(null)}
+        />
+      ) : null}
+
+      <Dialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Clear privacy log?</DialogTitle>
+            <DialogDescription>
+              This removes the local audit log, including redaction events. It does not delete your vault or
+              conversations.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowClearConfirm(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => void handleClearLogs()}>
+              Clear log
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showDeleteAll} onOpenChange={setShowDeleteAll}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete everything?</DialogTitle>
+            <DialogDescription>
+              This permanently deletes every conversation, memory, run, log, and the encrypted vault. This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowDeleteAll(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => void handleDeleteEverything()}>
+              Delete everything
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

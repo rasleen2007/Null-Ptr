@@ -39,7 +39,7 @@ export function ModelPicker({
     <Select value={value || undefined} onValueChange={onChange} disabled={disabled || !models.length}>
       <SelectTrigger
         className={cn(
-          "h-8 w-auto min-w-[150px] max-w-[230px] gap-2 rounded-lg border-white/[0.08] bg-white/[0.03] px-2.5 text-[0.68rem] text-slate-300",
+          "h-8 w-auto min-w-[150px] max-w-[230px] gap-2 rounded-lg border-slate-300 bg-white px-2.5 text-[0.68rem] text-slate-700",
           className,
         )}
         aria-label="Select model"
@@ -54,8 +54,8 @@ export function ModelPicker({
               <SelectItem key={model.id} value={model.id} className="text-xs">
                 <span className="flex items-center gap-2">
                   <span>{model.label}</span>
-                  {model.free ? <span className="text-[0.55rem] text-emerald-400/80">free</span> : null}
-                  {!model.supportsTools ? <span className="text-[0.55rem] text-slate-500">no tools</span> : null}
+                  {model.free ? <span className="text-[0.55rem] text-emerald-600">free</span> : null}
+                  {!model.supportsTools ? <span className="text-[0.55rem] text-slate-400">no tools</span> : null}
                 </span>
               </SelectItem>
             ))}

@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 export default function NotFound() {
   return (
     <div className="flex min-h-[70vh] flex-col items-center justify-center p-6 text-center">
-      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-cyan-400/20 bg-cyan-400/10 text-cyan-300">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl border border-indigo-200 bg-indigo-50 text-indigo-600">
         <FileQuestion className="h-8 w-8" />
       </div>
-      <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-100 sm:text-3xl">
+      <h1 className="mt-6 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
         Page Not Found
       </h1>
-      <p className="mt-2 max-w-md text-sm text-slate-400">
+      <p className="mt-2 max-w-md text-sm text-slate-500">
         The government service, conversation, or setting you are looking for does not exist or has been moved.
       </p>
       <div className="mt-6 flex items-center gap-3">

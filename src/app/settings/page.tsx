@@ -584,10 +584,10 @@ export default function SettingsPage() {
                   and restart to change them. This is a single-user local harness — add authentication before exposing it publicly.
                 </p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Link href="/models" className="inline-flex items-center gap-1 text-[0.62rem] text-indigo-600 hover:text-indigo-700">
-                    Model manager <ArrowUpRight className="h-2.5 w-2.5" />
+                  <Link href="/chat" className="inline-flex items-center gap-1 text-[0.62rem] text-indigo-600 hover:text-indigo-700">
+                    Model picker <ArrowUpRight className="h-2.5 w-2.5" />
                   </Link>
-                  <Link href="/monitor" className="inline-flex items-center gap-1 text-[0.62rem] text-indigo-600 hover:text-indigo-700">
+                  <Link href="/activity" className="inline-flex items-center gap-1 text-[0.62rem] text-indigo-600 hover:text-indigo-700">
                     Execution monitor <ArrowUpRight className="h-2.5 w-2.5" />
                   </Link>
                 </div>

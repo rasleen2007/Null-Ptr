@@ -43,12 +43,25 @@ interface Run {
   id: string;
   conversationId: string;
   model: string;
-  status: "pending" | "running" | "completed" | "failed" | "awaiting_approval";
+  status: "pending" | "running" | "completed" | "failed" | "awaiting_approval" | "cancelled";
   startedAt: string;
   completedAt?: string;
   prompt: string;
   error?: string;
   toolsUsed: string[];
+  tokensUsed?: number;
+}
+
+interface RunRecordShape {
+  id: string;
+  conversationId?: string;
+  status: Run["status"];
+  input: string;
+  state?: { model?: string };
+  error?: string;
+  createdAt: string;
+  updatedAt: string;
+  toolsUsed?: string[];
   tokensUsed?: number;
 }
 
@@ -70,6 +83,7 @@ const STATUS_CONFIG = {
   running: { label: "Running", color: "bg-indigo-100 text-indigo-600", icon: Loader2 },
   completed: { label: "Completed", color: "bg-emerald-100 text-emerald-600", icon: CheckCircle2 },
   failed: { label: "Failed", color: "bg-rose-100 text-rose-600", icon: AlertTriangle },
+  cancelled: { label: "Cancelled", color: "bg-slate-100 text-slate-500", icon: X },
   awaiting_approval: { label: "Awaiting Approval", color: "bg-amber-100 text-amber-600", icon: ShieldCheck },
 } as const;
 
@@ -78,7 +92,22 @@ async function fetchRuns(): Promise<Run[]> {
     const response = await fetch("/api/runs", { cache: "no-store" });
     if (!response.ok) return [];
     const data = await response.json();
-    return data.runs || [];
+    const records: RunRecordShape[] = data.runs || [];
+    return records.map((record) => ({
+      id: record.id,
+      conversationId: record.conversationId ?? "",
+      model: record.state?.model ?? "unknown",
+      status: record.status,
+      startedAt: record.createdAt,
+      completedAt:
+        record.status === "completed" || record.status === "failed" || record.status === "cancelled"
+          ? record.updatedAt
+          : undefined,
+      prompt: record.input,
+      error: record.error,
+      toolsUsed: record.toolsUsed ?? [],
+      tokensUsed: record.tokensUsed,
+    }));
   } catch {
     return [];
   }
@@ -360,9 +389,25 @@ export default function ActivityPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await fetch(`/api/runs/${id}`, { method: "DELETE" });
+    } catch {
+      // Keep the row if the request failed; the next refresh will restore it.
+      setDeleteConfirm(null);
+      return;
+    }
     setRuns((prev) => prev.filter((r) => r.id !== id));
     setDeleteConfirm(null);
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await fetch("/api/runs", { method: "DELETE" });
+      setRuns([]);
+    } catch {
+      // ignore; the refresh button lets the user retry
+    }
   };
 
   if (loading) {
@@ -386,7 +431,7 @@ export default function ActivityPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => { setRuns([]); }} className="gap-2" disabled={runs.length === 0}>
+              <Button variant="outline" onClick={() => void handleClearAll()} className="gap-2" disabled={runs.length === 0}>
                 <Trash2 className="h-4 w-4" /> Clear All
               </Button>
               <Button variant="outline" onClick={() => window.location.reload()} className="gap-2">
@@ -421,6 +466,7 @@ export default function ActivityPage() {
                 <option value="running">Running</option>
                 <option value="completed">Completed</option>
                 <option value="failed">Failed</option>
+                <option value="cancelled">Cancelled</option>
                 <option value="awaiting_approval">Awaiting Approval</option>
               </select>
               <Button variant="outline" onClick={() => { setFilter(""); setStatusFilter("all"); }} className="gap-2">

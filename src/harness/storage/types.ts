@@ -89,6 +89,8 @@ export interface Storage {
     patch: Partial<Pick<RunRecord, "status" | "state" | "error">>,
   ): Promise<RunRecord | null>;
   listRuns(limit?: number): Promise<RunRecord[]>;
+  deleteRun(id: string): Promise<void>;
+  clearRuns(): Promise<void>;
   getSettings(): Promise<AppSettings>;
   updateSettings(patch: Partial<AppSettings>): Promise<AppSettings>;
 }

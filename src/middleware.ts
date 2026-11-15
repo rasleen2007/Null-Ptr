@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { accessTokenFromHeaders, isAccessTokenRequired, verifyAccessToken } from "./lib/access";
 import { checkRateLimit, pruneExpiredRateLimits } from "./lib/rate-limit";
+import { envValue } from "./lib/env";
 
 const PUBLIC_API_PATHS = new Set(["/api/health", "/api/auth"]);
 
@@ -17,9 +18,9 @@ function clientIp(req: NextRequest): string {
 
 function limitForPath(pathname: string): number {
   if (pathname === "/api/chat" || /^\/api\/runs\/[^/]+\/resume$/.test(pathname)) {
-    return positiveInt(process.env.JARVIS_CHAT_RATE_LIMIT_MAX, 60);
+    return positiveInt(envValue("SAATHI_CHAT_RATE_LIMIT_MAX", "JARVIS_CHAT_RATE_LIMIT_MAX"), 60);
   }
-  return positiveInt(process.env.JARVIS_RATE_LIMIT_MAX, 240);
+  return positiveInt(envValue("SAATHI_RATE_LIMIT_MAX", "JARVIS_RATE_LIMIT_MAX"), 240);
 }
 
 export async function middleware(req: NextRequest) {
@@ -27,7 +28,7 @@ export async function middleware(req: NextRequest) {
   if (req.method === "OPTIONS") return NextResponse.next();
 
   pruneExpiredRateLimits();
-  const windowMs = positiveInt(process.env.JARVIS_RATE_LIMIT_WINDOW_MS, 60_000);
+  const windowMs = positiveInt(envValue("SAATHI_RATE_LIMIT_WINDOW_MS", "JARVIS_RATE_LIMIT_WINDOW_MS"), 60_000);
   const limit = limitForPath(pathname);
   const result = checkRateLimit(`${clientIp(req)}:${pathname}`, { limit, windowMs });
 
@@ -48,7 +49,7 @@ export async function middleware(req: NextRequest) {
     const token = accessTokenFromHeaders(req.headers);
     if (!(await verifyAccessToken(token))) {
       return NextResponse.json(
-        { error: "Unauthorized. Provide a valid JARVIS access token.", code: "unauthorized" },
+        { error: "Unauthorized. Provide a valid Saathi access token.", code: "unauthorized" },
         {
           status: 401,
           headers: {

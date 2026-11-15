@@ -1,5 +1,6 @@
 import { getHarness } from "@/harness";
 import { isAccessTokenRequired } from "@/lib/access";
+import { envValue } from "@/lib/env";
 import { jsonError, jsonOk } from "@/lib/http";
 
 export const runtime = "nodejs";
@@ -34,8 +35,10 @@ export async function GET() {
       authRequired: isAccessTokenRequired(),
       auth: {
         required: isAccessTokenRequired(),
-        rateLimitPerMinute: Number(process.env.JARVIS_RATE_LIMIT_MAX ?? "240"),
-        chatRateLimitPerMinute: Number(process.env.JARVIS_CHAT_RATE_LIMIT_MAX ?? "60"),
+        rateLimitPerMinute: Number(envValue("SAATHI_RATE_LIMIT_MAX", "JARVIS_RATE_LIMIT_MAX") ?? "240"),
+        chatRateLimitPerMinute: Number(
+          envValue("SAATHI_CHAT_RATE_LIMIT_MAX", "JARVIS_CHAT_RATE_LIMIT_MAX") ?? "60",
+        ),
       },
     });
   } catch (error) {

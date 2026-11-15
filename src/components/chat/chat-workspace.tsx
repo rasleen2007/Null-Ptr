@@ -31,7 +31,7 @@ import {
   type SettingsResponse,
   type ToolsResponse,
 } from "@/lib/api";
-import { useChatSession, type PrivacyReport } from "@/lib/use-chat-session";
+import { useChatSession, type PrivacyReport, type ToolActivity } from "@/lib/use-chat-session";
 import { cn, formatNumber } from "@/lib/utils";
 import { AIOrb } from "@/components/visual/ai-orb";
 import { ThinkingIndicator } from "@/components/common/thinking-indicator";
@@ -54,6 +54,7 @@ import { PermissionCard } from "./permission-card";
 import { ToolActivityList } from "./tool-activity";
 import { VaultControl } from "@/components/vault/vault-control";
 import { MemoryRecallPills } from "./memory-recall-pills";
+import { DocumentCardList } from "./document-card";
 
 const SARKARI_SUGGESTIONS = [
   "Mere liye suitable government schemes batao",
@@ -72,6 +73,45 @@ function shortModel(id: string | undefined) {
   if (!id) return undefined;
   const parts = id.split(":");
   return parts.slice(1).join(":") || id;
+}
+
+interface GeneratedDocument {
+  type: "rti" | "pdf";
+  title: string;
+  path: string;
+  preview?: string;
+  bytes?: number;
+  language?: string;
+}
+
+function generatedDocuments(activities: ToolActivity[]): GeneratedDocument[] {
+  const documents: GeneratedDocument[] = [];
+  for (const activity of activities) {
+    if (activity.isError || !activity.result) continue;
+    const name = activity.call.name;
+    if (name !== "rti_draft" && name !== "form_fill") continue;
+    try {
+      const parsed = JSON.parse(activity.result) as {
+        path?: string;
+        bytes?: number;
+        preview?: string;
+        language?: string;
+        written?: boolean;
+      };
+      if (!parsed.path || parsed.written === false) continue;
+      documents.push({
+        type: name === "rti_draft" ? "rti" : "pdf",
+        title: parsed.path.split(/[\\/]/).pop() || "Generated document",
+        path: parsed.path,
+        preview: parsed.preview,
+        bytes: parsed.bytes,
+        language: parsed.language,
+      });
+    } catch {
+      // Tool results that are not JSON (for example a plain error) are ignored.
+    }
+  }
+  return documents;
 }
 
 function Welcome({
@@ -342,7 +382,7 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
     if (!initialPrompt || promptSentRef.current) return;
     if (!modelsData || !selectedModel) return;
     promptSentRef.current = true;
-    router.replace("/assistant");
+    router.replace("/chat");
     void (async () => {
       if (initialConversation && session.conversationId !== initialConversation) {
         await loadConversation(initialConversation);
@@ -390,6 +430,7 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
   const visibleMessages = session.messages.filter(
     (message) => message.role === "user" || message.role === "assistant",
   );
+  const documents = generatedDocuments(session.toolActivity);
 
   const handleScroll = useCallback(() => {
     const node = scrollRef.current;
@@ -525,6 +566,8 @@ export function ChatWorkspace({ mode }: { mode: "chat" | "agent" }) {
                       </motion.div>
                     ) : null}
                   </AnimatePresence>
+
+                  {documents.length ? <DocumentCardList documents={documents} /> : null}
 
                   {session.thinking.length && !session.liveText ? (
                     <ThinkingIndicator

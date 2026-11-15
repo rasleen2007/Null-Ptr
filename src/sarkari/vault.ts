@@ -11,6 +11,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import { promisify } from "node:util";
 import { canonicalizePii, placeholderPrefix, type PiiType } from "./pii";
+import { envValue } from "../lib/env";
 
 /**
  * Encrypted personal vault.
@@ -82,7 +83,7 @@ interface VaultSession {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __jarvisSarkariVault: VaultSession | undefined;
+  var __saathiSarkariVault: VaultSession | undefined;
 }
 
 const SCRYPT_OPTIONS = { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 } as const;
@@ -97,7 +98,7 @@ const PLACEHOLDER_RE = /^\{\{([A-Z][A-Z0-9_]*)_(\d+)\}\}$/;
 
 export function getVaultPath(): string {
   return (
-    process.env.JARVIS_VAULT_FILE?.trim() ||
+    envValue("SAATHI_VAULT_FILE", "JARVIS_VAULT_FILE") ||
     path.join(process.cwd(), ".data", "vault.enc.json")
   );
 }
@@ -108,10 +109,10 @@ function emptySession(filePath: string): VaultSession {
 
 function getSession(): VaultSession {
   const filePath = getVaultPath();
-  if (!globalThis.__jarvisSarkariVault || globalThis.__jarvisSarkariVault.filePath !== filePath) {
-    globalThis.__jarvisSarkariVault = emptySession(filePath);
+  if (!globalThis.__saathiSarkariVault || globalThis.__saathiSarkariVault.filePath !== filePath) {
+    globalThis.__saathiSarkariVault = emptySession(filePath);
   }
-  return globalThis.__jarvisSarkariVault;
+  return globalThis.__saathiSarkariVault;
 }
 
 function requireUnlocked(): VaultSession {
@@ -389,10 +390,10 @@ export async function wipeVault(): Promise<void> {
 
 /**
  * Test helper: drop the cached session without touching the file. Tests call this
- * between cases that point `JARVIS_VAULT_FILE` at different temporary directories.
+ * between cases that point `SAATHI_VAULT_FILE` at different temporary directories.
  */
 export function resetVaultForTests(): void {
-  const session = globalThis.__jarvisSarkariVault;
+  const session = globalThis.__saathiSarkariVault;
   if (session?.key) session.key.fill(0);
-  globalThis.__jarvisSarkariVault = undefined;
+  globalThis.__saathiSarkariVault = undefined;
 }

@@ -69,7 +69,7 @@ describe("production HTTP API E2E", () => {
 
     const headerToken = await fetch(`${server.baseUrl}/api/conversations`, {
       cache: "no-store",
-      headers: { "x-jarvis-token": TOKEN },
+      headers: { "x-saathi-token": TOKEN },
     });
     expect(headerToken.status).toBe(200);
 

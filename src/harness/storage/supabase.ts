@@ -496,6 +496,18 @@ export function createSupabaseStorage(url: string, serviceRoleKey: string): Stor
       return (assertOk(result, "listRuns") as RunRow[]).map(toRun);
     },
 
+    async deleteRun(id) {
+      const logs = await client.from("jarvis_logs").delete().eq("run_id", id);
+      if (logs.error) throw new Error(`[jarvis/supabase] deleteRun logs: ${logs.error.message}`);
+      const result = await client.from("jarvis_runs").delete().eq("id", id);
+      if (result.error) throw new Error(`[jarvis/supabase] deleteRun: ${result.error.message}`);
+    },
+
+    async clearRuns() {
+      const result = await client.from("jarvis_runs").delete().neq("id", "");
+      if (result.error) throw new Error(`[jarvis/supabase] clearRuns: ${result.error.message}`);
+    },
+
     getSettings,
 
     async updateSettings(patch) {

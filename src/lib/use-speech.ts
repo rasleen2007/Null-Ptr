@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { speechLangFor, stripForSpeech } from "@/lib/speech";
 
 /**
@@ -71,7 +71,7 @@ export function useSpeech() {
     [],
   );
 
-  return { supported, speaking, speak, stop };
+  return useMemo(() => ({ supported, speaking, speak, stop }), [supported, speaking, speak, stop]);
 }
 
 export type SpeechController = ReturnType<typeof useSpeech>;

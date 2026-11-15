@@ -1,7 +1,9 @@
 const BEARER_PREFIX = "bearer ";
 
+import { envValue } from "./env";
+
 export function isAccessTokenRequired(): boolean {
-  return Boolean(process.env.JARVIS_ACCESS_TOKEN?.trim());
+  return Boolean(envValue("SAATHI_ACCESS_TOKEN", "JARVIS_ACCESS_TOKEN"));
 }
 
 export function accessTokenFromHeaders(headers: Headers): string | undefined {
@@ -10,7 +12,7 @@ export function accessTokenFromHeaders(headers: Headers): string | undefined {
     const token = authorization.slice(BEARER_PREFIX.length).trim();
     if (token) return token;
   }
-  const headerToken = headers.get("x-jarvis-token")?.trim();
+  const headerToken = headers.get("x-saathi-token")?.trim();
   return headerToken || undefined;
 }
 
@@ -20,7 +22,7 @@ async function digest(value: string): Promise<Uint8Array> {
 }
 
 export async function verifyAccessToken(provided: string | undefined): Promise<boolean> {
-  const expected = process.env.JARVIS_ACCESS_TOKEN?.trim();
+  const expected = envValue("SAATHI_ACCESS_TOKEN", "JARVIS_ACCESS_TOKEN");
   if (!expected) return true;
   if (!provided) return false;
   const [actualHash, expectedHash] = await Promise.all([digest(provided), digest(expected)]);
