@@ -1,6 +1,6 @@
 # Sarkari Kaam AI Harness (JARVIS)
 
-A **privacy-first, local-first** Indian government paperwork assistant. Built as a specialized variant of the JARVIS AI Harness with sovereign PII protection, Hindi/Hinglish support, and government-domain tooling.
+A **privacy-first, local-first** Indian government paperwork assistant. specialized variant of the AI Harness with sovereign PII protection, Hindi/Hinglish support, and government-domain tooling.
 
 ## Architecture Overview
 
